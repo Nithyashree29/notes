@@ -1035,7 +1035,12 @@ for each jobs you can monitor for each tasks and also you can see the expectatio
 
 Unity Catalog Functions
 =======================
+User defined functions - These user defined fnctions are session scoped.
+Unity Catalog Functions - Are actually you can see a kind of permanent functions that will stay in your catalog.(same like how you create SQL functions in sql databases same way you create in catalogs).
 
+Scalar Functions
+=================
+Scalar functionss
 
 
 
