@@ -44,7 +44,11 @@ NoSQL Databases - Non-relational databases designed for unstructured or semi-str
     Graph Databases - Data is represented as nodes(entities) and edges(relationships) to reflect connections and relationships.
     Document Database - Data is stored in document, BSON, or XML. Each document is self-contained unit that can contain various types of data and structures.
 Hierarchial Databases - Data organized in tree-like structure(parent-child relationships).
+    Data is organized in a tree-like structure with parent-child relationships. Each child node has only one parent, while each parent can have multiple childern. Data is accessed via predefined paths, similar to navigating a directory structure.
 Network Databases - Data organized in a graph structure allowing many-to-many relationships.
+    Similar to hierarchial databases but allows more flexible many-to-many relationships. Uses a graph-like structure with records(nodes) connected by relationships(edges). Data is accessed using pointers or paths.
+    Data is stored in a graph structure where each record(node) is connected to others through links(edges).allowing for more flexible and intricate data relationships. Network Databases supports dynamic and flexible relationships, which makes it easier to adapt ti changes in data models over time.
+
 Object Oriented Databases - Databases that store data in the form of objects, similar to object-oriented programming languages.
 
 
