@@ -1,1 +1,48 @@
+DBMS
+====
+Hierarchy of Data
+*Data is organized in a manner such that data can be easily accessed, managed and updated.
+*The data hierarchy represents the structure of data, from the smallest units(bits) to the largest (databases).
+*It is organised in 
+1. Bit - The smallest data unit
+2. Byte - Agroup of bits.
+3. Field - A single piece of information.
+4. Record(Tuple) - A collection of fields.
+5. File(table) - A collection os similar records.
+6. Database - A collection of related tables.
+
+Information
+===========
+Data becomes information when it is processed, organized, or structured in a meaningful way that allows users to make decisions or derive insights.
+
+What is Database?
+A Database is an organized collection of data that is stored and managed electronically in a way that allows easy access, retrieval and manipulation.
+Data Integrity - Data should remain accurate and consistent over its lifecycle.
+Data Security - Data should be protected from unauthorised access, breaches and corruption.
+Data Availability - Data should be accessible and usable when needed without interruption.
+
+Characteristics of Database 
+============================
+Datascalability - The ability of the database to handle increasing amounts of data and growing numbers of users without compromising performance.
+Data integrity -  ensures that the data is accurate, consistent and reliable across the databse, integrity constaints such as primary keys, foreign keys, and unique constraints help maintain this integrity,
+Data Security - Protects data from unauthorized access and ensures onky authorized users can view, edit or maipulate the data , security features include user authentication, encryption, and access control mechanism.
+Data Consistency - Ensures that data remains consistent across all instances in the database, especially during transactions. tHis characteristic is enforced by using transactions and database constraints.
+Data Redundancy Minimization - Reduces the duplication of data within the database by using normalization techniques and relationships between tables. This saves storage space and ensures easier updfates.
+Concurrent Access - Supports multiple users accessing the database simultaneously while maintaining the integrity and isolatioon of each users transactions. This ensures that the system can handle large volumnes of operations without conflicts.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
