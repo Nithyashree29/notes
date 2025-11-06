@@ -30,6 +30,22 @@ Data Consistency - Ensures that data remains consistent across all instances in 
 Data Redundancy Minimization - Reduces the duplication of data within the database by using normalization techniques and relationships between tables. This saves storage space and ensures easier updfates.
 Concurrent Access - Supports multiple users accessing the database simultaneously while maintaining the integrity and isolatioon of each users transactions. This ensures that the system can handle large volumnes of operations without conflicts.
 
+Types of databases
+==================
+Relational Databases - Organizing data interms of rows(record entry) and columns(attributes as parameter).
+    Database allows data tp be stored systematically and these data to be easily retrieved, filtered, stored and updated efficiently and accurately.
+    Uses Structured Query language for querying and managing data.
+    Use cases - Banking systems, enterprise applications, and e-commerce platforms.
+NoSQL Databases - Non-relational databases designed for unstructured or semi-structured data.
+    Designed for unstructured, semi-structured, or non-relational data. Supports flexible schema design with dynamic columns or fields. NO predefined schema is required, making it easy to modify the structure of data as requiremnets change, without the need for database migrations.
+    UseCases - Realtime analytics, social networks, IOT data, content management.
+    Key-Value - Data is stored as a collection of key-value pairs. Each key is unique and is used to retrive the corresponding value
+    Column-Family - Data is stored in columns rather than rows, grouped into columns families. Each column family can have columns inside it and the data is stored in a space format.
+    Graph Databases - Data is represented as nodes(entities) and edges(relationships) to reflect connections and relationships.
+    Document Database - Data is stored in document, BSON, or XML. Each document is self-contained unit that can contain various types of data and structures.
+Hierarchial Databases - Data organized in tree-like structure(parent-child relationships).
+Network Databases - Data organized in a graph structure allowing many-to-many relationships.
+Object Oriented Databases - Databases that store data in the form of objects, similar to object-oriented programming languages.
 
 
 
