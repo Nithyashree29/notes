@@ -1,1 +1,113 @@
+Check the notes..
+
+transformation -> gold -> fact_sales.py
+import dlt
+from pyspark.sql.functions import *
+
+# Gold Streaming View On Top Of Silver View(NOT Silver Table)
+@dlt.view(
+  name = "sales_gold_view"
+)
+def sales_gold_view():
+  df = spark.readStream.table("sales_silver_view")
+  return df
+
+#CREATING FACT TABLE (WITH AUTO CDC)
+dlt.create_streaming_table(name="fact_sales")
+dlt.create_auto_cdc_flow(
+    target = 'fact_sales',
+    source = 'sales_gold_view',
+    keys = ['sales_id'],
+    sequence_by = col('processDate'),
+    stored_as_scd_type = 1
+)
+
+transformation -> gold -> dim_stores.py
+import dlt
+from pyspark.sql.functions import *
+
+# Gold Streaming View On Top Of Silver View(NOT Silver Table)
+@dlt.view(
+  name = "stores_gold_view"
+)
+def sales_gold_view():
+  df = spark.readStream.table("stores_silver_view")
+  return df
+
+#CREATING DIM SCD TABLE TYPE-2 (WITH AUTO CDC)
+dlt.create_streaming_table(name="dim_stores")
+dlt.create_auto_cdc_flow(
+    target = 'sim_stores',
+    source = 'stores_gold_view',
+    keys = ['stores_id'],
+    sequence_by = col('processDate'),
+    stored_as_scd_type = 2,
+    except_column_list=['processDate']
+)
+
+transformation -> gold -> dim_products.py
+import dlt
+from pyspark.sql.functions import *
+
+# Gold Streaming View On Top Of Silver View(NOT Silver Table)
+@dlt.view(
+  name = "products_gold_view"
+)
+def sales_gold_view():
+  df = spark.readStream.table("products_silver_view")
+  return df
+
+#CREATING DIM SCD TYPE-2 TABLE (WITH AUTO CDC)
+dlt.create_streaming_table(name="dim_products")
+dlt.create_auto_cdc_flow(
+    target = 'dim_products',
+    source = 'products_gold_view',
+    keys = ['stores_id'],
+    sequence_by = col('processDate'),
+    stored_as_scd_type = 2,
+    except_column_list = ['processDate']
+)
+
+transformation -> gold -> dim_customers.py
+import dlt
+from pyspark.sql.functions import *
+
+# Gold Streaming View On Top Of Silver View(NOT Silver Table)
+@dlt.view(
+  name = "customers_gold_view"
+)
+def sales_gold_view():
+  df = spark.readStream.table("customers_silver_view")
+  return df
+
+#CREATING DIM SCD TYPE-2 TABLE (WITH AUTO CDC)
+dlt.create_streaming_table(name="dim_customer")
+dlt.create_auto_cdc_flow(
+    target = 'dim_customers',
+    source = 'customers_gold_view',
+    keys = ['stores_id'],
+    sequence_by = col('processDate'),
+    stored_as_scd_type = 2,
+    except_column_list = ['processDate']
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
