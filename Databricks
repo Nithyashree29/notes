@@ -1,4 +1,932 @@
-Check the notes..
+LakeHouse - Data warehouse + datalake (SQL capabilities on top of the datalake)
+Deltalake/ Opentable format - Part of family called Open Table Format.(A kind of logical data on top of datalake, behaves like a table but not actually a table and user request goes to open table format.)
+    Other examples of Opentableformat - Apache Hudi, Apache Iceberg.
+    File format - Parquet + delta_log (Transactional Log)
+
+Databricks - Management layer build on top of ApacheSpark. A processing Solution.
+*It manages cluster.
+*Notebook for coding.
+*Optimized engine.
+*Unity Catalog.
+*DLT(Declarative Framework).
+*Alerts.
+*SQL warehouse.
+*ETL Workflow.
+
+Aapche Spark - Is a fast, general-purpose distributed computing engine designed for big data analytics.
+The founders of apache spark are the founders of Databricks.
+
+
+Databricks Architecture
+=======================
+Control Plane - The Control Plane includes the backend services that azure Databricks manages in your Azure Databricks account. The 1. web application is in the control plane. 2. UI and UX of Databricks and UI and UX okay etc..
+Compute Plane - The compute plane is where your data is processed.
+Two types - 1.Serverless compute (All the compute resides in the databricks), Classic/traditional compute (when you create it it resides in the azure account, like ex when you create vm's it will be created in azure account, all storage account, Your resources).
+
+Mediallion Architecture
+=======================
+Bronze - Raw(Replica of the source)
+Silver - Enriched layer, High quality data.
+Gold - Currated Layer, Dimensional data, which serves for others, Ready to serve stake holders.
+Note -
+    As you move towards the gold layer the quality of the data is improved.
+    Data bricks recently contributed to apache, ie a part of apache spark. DLT(Delta live table, declarative piplelines)
+
+Compute
+=======
+All purpose -  For development, exploration, notebooks and ad-hoc abalysis.
+Features -
+Supports multiple users working together.
+Can be used with notebooks, dashboards, and APIs
+Costs more because it's always running while in use.
+Good for data exploration and testing pipelines.
+
+Job Compute - (ETL Job), you wont use much and automatically terminated once job done, no more used.
+Use case - For running production jobs or scheduled piplelines.
+Features :
+Spines up when a job starts, terminates when the job ends.
+More cost-effictive than all-purpose clusters.
+Can't be used for interactive notebooks.
+
+Pools
+Use case - Reduce startup time and cost for clusters
+Features : 
+Pre-warned compute resources.
+Saves cost by avoiding cold-start times.
+Can be used for both job and all-purpose clusters.
+
+SQL warehouse
+Use case - For running SQL queries and powering dashboards and not for pyspark.
+Fetures :
+Connects easily to Bi toold like Power BI, Tableau.
+Optimized for SQL queries, not Spark Jobs.
+
+Serverless
+Use case - Hands off resource Management-best for cost and scaling.
+Features :
+Auto-scales and auto-terminates.
+You don't manage instances-Databricks does.
+Ideal for unpredictable workloads.
+
+Catalog
+=======
+Most popular catalog-Unity Catalog.
+
+Unity Catalog
+-------------
+Best data governance feature, framework etc..
+Unity Catalog is a centralized data governance solution in Azure Databricks that helps manage data access, track usage, and enable discovery across all workspaces.
+
+key Highlights:
+centralized access control: Define data policies once and enforce them across all workspaces.
+Auditing and lineage: Automatically logs data access and tracks how data flows and is transformed.
+Data discovery: Supports tagging, documentation, and search to help users get relevant datasets.
+
+Hierarchy
+=========
+Unity Metastore
+      |
+Unity Catalog
+      | 
+Schema
+      |
+Tables, Views, Func, Volume
+
+Metastore - Holds data about data and remember that metastore even holds data for managed tables.
+Note - All the workspaces should be connected to same metastore , only then it works and share.
+       Once you create the catalog it will be autromatically linked to the metastore so you dont have to worry abou8t that.
+    
+Managed and External Tables
+============================
+Manages Tables - Layer managed by databricks with default storage
+    When managed table is created and delete or drop table both metastore details and the data is deleted.
+External tables - Databricks has 0 intervention with this cloud storage account, which is used by users and external to databricks.
+    When external table is created with location and delete or drop table only metastore data is deleted and data remain in external location since databricks won't have permission to my data.
+
+Volumes
+=======
+Data governance layer on top of the non tabular data.
+earler also you can query the data using/giving the full path to your cloud storage so whats the difference is now you can govern the data you can register under perticlar catalog/schema/..
+You can provide the heirarchy to the volumes to the cloud storage. - which acts like external volume becuase you involved cloud storage.
+In case of managed volumes databricks create a folder called "<main folder>" once you create volume and if you want multipl folder inside volumne databricks behind create another foldr levrl behind the scenes.
+
+17802989
+                                       
+Volumes
+=======
+CREATE <EXTERNAL key word if need to create external vol> VOLUME <catalog>.<schema>.<volume>
+LOCATION <If external>
+
+Later you can create muliple folders inside volumne from UI and upload the files.
+
+%SQL
+SELECT * FROM csv.`/Volumes/<catalog>/<schema>/<volumne_name>`  If its a csv file then try to provide the full path as it cannot inferscema .
+
+dbutils
+=======
+dbutils is a powerfull utility library provided by Databricks to help you interact with your Databricks env more effectively. It aloows you to perform a variety of tasks like:
+*Managing files and directorires.
+*Working with secrets.
+*Handling widgets (for parameterization)
+*Managing libraries.
+
+dbutils.fs.ls(<path>)
+dbutils.fs.mkdir(<folder_path>)
+dbutils.widgets.list("pat1"., "")
+
+
+PySpark
+======
+**Customers**
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+df = spark.read.format("csv") \
+	.option("header", "true")
+	.option("inferSchema", "true")
+	.load( "/Volumes/<catalog>/<schema>/<volume_name>/<folder for csv files>/")
+display(df)
+df.printSchema()
+  
+df = df.withColumn("<new/col_name>", upper(col("name")))
+df = df.withColumn("<domain>", split(col("email"), "@")[1])
+display(df.groupBy("domain", agg(count(col("<name>")).alias("total_customers")).sort(col("total_customers").desc()))
+df = df.withColumn("<new_col>", current_timestamp())
+#df.write.format("delta")\
+	#.mode("append/overwrite/ignore/error")
+	#.save("<path>")
+
+--UPSERT mode - Update + Insert 
+
+from delta.tables import DeltaTable 
+if spark.Catalog.tableExists("<catalog>/<volume>/<table_folder>"):
+	dlt_obj = DeltaTable.forName(spark, "<catalog>.<volume>.<table_folder>")
+	dlt_obj.alias("target").merge(df.alias("sorce"), "target.<col> == source.<col>")\
+		.whenMatchedUpdateAll()\
+		.whenNotMatchedInsertAll()\
+		.execute()
+else:
+	df.write.format("delta")\
+		.mode("append")
+		.saveAsTable("<catalog>.<volume>.<table_folder>")
+ 
+
+--Products Table
+============
+df_prod = spark.read.format("csv").option("header", "true").option("inferschema", "true").load("Volumes/<catalog>/<schema>/<folder>/")
+display(df_prod)
+df_prod = df_prod.withColumn("<col>", current_timestamp())
+df_prod.groupBy("col").agg(avg("col").alias("avg_col")
+
+if spark.catalog.tableExists("<path>"):
+	dlt_obj = DeltaTable.forName(spark, "<volume_path>")
+	dlt_obj.alias("trg".merge(df_prod.alias("src"), "trg.<id> == src.<id>")\
+		.whenMatchedUpdateAll()\
+		.whenNotMatachedInsertAll()\
+		.execute()
+else:
+	df_prod.write.format("delta")\
+	.mode("append")
+	.saveAsTable("<volume_path>")
+
+Structured Queries With SparkSQL
+========================
+df = spark.sql("SELECT * FROM <table>").show()
+
+TempViews - SQL views which are temporary.
+
+df.createOrReplaceTempView("<table_name>")
+spark.sql("SELECT * FROM <table_name>")
+
+PySpark UDF's
+===========
+**Always try to use the build in UDF because pysaprk  needs to attachs a Python interpreter within the executors machine to interpret the code, because by default executors do not have that Python interpreter. It just have like you can say it has your JVM interpreter to convert your code. and it might impact performance.
+
+def greet(input):
+       return "Hello + str(input)
+
+udf_greet = udf(greet)
+df = df.withColumn("greet", udf_greet(col("<col_name>")))
+display(df)
+
+Databricks Files
+===========
+The Databricks Data Intelligence platfrom helps data teams across your organization work together and turn data ideas into real solutions by using shared and secure data assets and tools.
+
+Reading the Databricks file
+===================
+with open("<path of your file>", "r") as f:
+	f.read()
+
+import <file_name>
+<file_name>.my_secret
+
+Databricks Lakehouse Federation
+========================
+Lakehouse federation in databricks is a powerful feature that allows you to query external data sources without moving the data into your Databricks lakehouse. This means you can run SQL queries on data stored in external systems like MySQL, PostgreSQL, Azure SQL DB, Snowflake, and more - directly from Databricks.
+* You define read-only connections to external databases.
+*These connections are restricted as catalogs in unity Catalog.
+*The actual data stays in the external system- only results are returned to Databricks.
+And these are registered under catalog in unity catalog called Foreign catalog.
+You can use it for POC and create unity catalog and register tables but not used for production.
+
+Foreign Catalogs and Foreign Tables in Lakehouse Federation
+==========================================
+go to catalog -> external data -> connections -> create connection -> connectionname(catalog name), connection type(connectors) ->hostname(if hosted servers)-> port, user, password -> create connection -> test connection.
+
+Foriegn catalog gets created and under that you have foreign tables.
+
+  17802989`
+
+ LakeFlow Connect
+==============
+We will have full control over data unlike lakehouse federation.
+Here you connect to the datasources and bring that data to the native cloud.ie, you are bringing data closer to your control to your native cloud solution(gcp, azure, aws...).
+
+Lakehouse Federation is for POC, LakeFlow connect is the recommended approach once you are done with POC.
+Why Lakeflow Connect - When you are ingecting the data and storing that data in your native storage solution in your data lake, which is connected to Databricks, you are the owner of the data.You can do any amazimg solution on that data.Low Latency, Optimization techniqies, amazing options from Databricks.
+
+Lakeflow Connect - Upload files : You can use data ingestion too for uploads in Data enneering section.
+Lakeflow Standard Connector - Autoloader, Cloud Storage, kafka etc.., Connect to Native cloud data usng external locations(batch and streaming), Autoloader.
+Lakeflow Manages Connector - typically somethng like partner connections.
+Fivetran - A managed ETL service that helps you to ingest data from so many sources. Basically low no code connetion builder for those sources, and it will simply ingest your data to your native cloud storage solution.
+
+Spark Streaming 
+===========
+Managed  spark structured atreaming service offeref by Databricks and autoloader.
+Autoloader - In Databricks is a powerfull feature designed to efficiently and incrementally load data from cloud storage into Databricks, especially when new files keep arriving continuously. It's ideal for building streaming data pipelines without manually tracking new files.
+
+Autoloader Architecture
+=================
+Idempotency/exactly Once - Uploading the data to the destination which is required or only new data instead of the entire load.
+As new files are detected, their metadata is saved in the scalable key-value store (RocksDB) at the checkpoint location of your AutoLoader pipeline. This helps ensure that each file is processed only once.
+Checkpoint -  Is like your repository where you can just dump all your information about your stream processing everything.
+
+Schema Inference - It says i(autoloader)  will infer the schema of your streaming query.
+When autoloader reads for the first time, it infers the schema by sampling up to 50 GB or 1000 files - whichever comes first. It then saves this schems information in a _schemas folder at the specified cloudFiles.schemaLocation, so it can keep track of any schema changes over time. Autoloader checks for new column while processing your data. If it finds any, it stops the stream and throws an UnknownFieldException. But before this happens, Auto Loader peforms schema inference on the latest micro-batch (updates the cached schema)and updates the schema location by adding the new columns at the end. It keeps the data types of the existing columns umchanged.
+
+
+Schema Evolution mode - Resue - if you have 100 ore columns it just creats the disc with col and value \
+	                         addNewColumns - it will create 100 new columns which is not much efficient.
+
+Coding Autoloader
+-----------------------
+Create VOLUME nithya.bronze.autovol
+create a directory inside your new volumne -> upload the files to it.
+create a folder destination, an new directory for checkpointing, data
+df = spark.readStream.format("cloudFiles")\
+	.option("cloudFiles.format", "csv")
+	.option("cloudFiles.schemaLocation", "/Volumes/nithya/bronze/autovol/destination/checkpoint/")\
+	.option("cloudFiles.schemaEvolutionMode", rescue")\
+	.load("Volumes/nithya/brnze/autovol/raw/")
+
+df.writeStream.format("delta")\
+	.outputMode("append")\
+	.option("checkpointLocation", "/Volumes/nithya/bronze/autovol/destination/checkpoint/")\
+	.trigger(once=True)\   #starts and then stops after processing
+	.start("/Volumes/nithya/bronze/destination/data")
+ 
+Once you read the data - you can see the new column created "_rescued_data" with null values and adds up if any new data with schema changes.
+once you add the data with new schema - it gets erroredout and when you restart it updated the schema
+
+resscued_schema = StructType() \
+	.add("discount", StringType()) \
+	.add("payment_method", StringType())
+
+#Parse the stringified JSON column
+df = df.withColumn("rescued_strict", from_json(col("_rescued_data"), rescued_schema))
+
+#Extract individual fields
+df = df.withColumn("rescued_discount", col("rescued_struct.discount")) \
+	.withColum("rescued_payment_method", col("rescued_struct.payment_method"))
+ 
+
+df = spark.readStream.format("cloudFiles")\
+	.option("cloudFiles.format", "csv")
+	.option("cloudFiles.schemaLocation", "/Volumes/nithya/bronze/autovol/destination/checkpoint/")\
+	.option("cloudFiles.schemaEvolutionMode", addMewColumns")\
+	.load("Volumes/nithya/brnze/autovol/raw/")
+
+df.writeStream.format("delta")\
+	.outputMode("append")\
+	.option("checkpointLocation", "/Volumes/nithya/bronze/autovol/destination/checkpoint/")\
+	.trigger(once=True)\   #starts and then stops after processing
+	.option("mergeSchema", True)\
+	.start("/Volumes/nithya/bronze/destination/data")
+
+Withe merge schema as True, Here the rescued data will still be null and the new columns will get automatically detectected and added as new columns.
+
+Incremental Load with COPY INTO
+=========================
+The COPY INTO SQL command is used to load data from a file path into a Delta table. It's a repeatable and reliable operation - any files that have already been processed are automatically ignored.(One limitation compared to autoloader is you need table for which you push data)Idempotentcy is achieved and obviously it's a repeatable and reliable operation.
+In COPY INTO you can just perform incremental loading if you just have the table in the destination, but with auto loader, you can either push your data to any kind of storage that we need or to any table.
+.start(). .toTable()
+For very large data autoloader is a perfect fit.
+low to mid range data copy into works.
+
+COPY INTO nithya.bronze.autocoltbl
+FROM "/Volumes/nithya/bronze/autovol/copyinto/"
+FILEFORMAT = PARQUET
+FORMAT_OPTIONS = ('mergeSchema' = 'True')
+COPY_OPTIONS = ('mergeSchema' = 'True')
+
+DataBRICKS SQL Warehouse
+=====================
+Databricks SQL provides data warehousing functionality directly within your existing data lakes, offering high performance and compatibilty with open data formats and ANSI SQL standards. It features a built-in SQL editor and tools for creating dashboards, enabling seamless collaboration within the databricks wokspaces.
+SQL warehouse is a compute resource that we get within Databricks SQL.Adn obviously, if we need to run our queries, if we just want to perform anything, we need some computation power so SQL warehouse is that paticular computation power within the help of which we can run our SQL queries.(Formarly kmown as SQL endpoints).
+SQL warehouse that your computation power or you can say it is a kind of SQL only cluster (the same way we create cluster for our spark code etc)a dedicated compute for only SQL workloads.
+
+SQL Editor -  Databricks provides a built-in SQL editor within its user interface that allows you to write queries, explore datasets, and build visualizations. Additionally, you can save your queries and share them with others in your workspace.
+Parametrized queries - Click on add parameters -> add the parameter
+ex - 
+select * from table1 where catagory = :<parameter name>;    #paramters for queries
+
+SELECT IDENTIFIER(:<parameter>  FROM table;  #parameters for columns
+
+SELECT IDENTIFIER(:<parameter1>), IDENTIFIER( :<parameter2>)  FROM table;  #parameters for columns
+
+Query Snippets
+--------------------
+for reusaility - some conditions or statements
+can be hardcoced or dynamic (WHERE category = ${1:replace_this} and price > ${2:replace_this}
+
+CTE's
+--------
+For reusability
+
+Query profile for Monitoring
+-----------------------------------
+
+SQL Alerts
+--------------
+
+Query Caching
+-------------------
+To boost query performance
+if you use same query + underlining data not changed + same user = no need to recompute and it ca use the cached query with quik results
+
+Databricks Genie
+---------------------
+Ask questions about your data in natural language build on top of your databricks catalog.
+Genie will convert that natural language into strutured query language, whch is SQL and that SQL language will be running on top of your real data.
+You -> SQLAgent (give your context like db, table)converts your nlp to sql query and outputs the output.
+
+Databricks SQL Dashboards
+----------------------------------
+To build dashboards
+
+Lakeflow Jobs
+==========
+It is a ETL jobs/pipeline that you need to create.
+Why?  to build reliable solutions/pipelines.
+
+Lakeflow Jobs- jobs consists of one or more tasks and support custom control flow logic like branching(if/ else statement) or looping(for each statement) using a visual authoring UI. 
+Tasks can load or transform data in an ETL workflow, or build, train and deploy ML models in a controlled and repeatable way as part of your machine learning pipelines.
+
+First Lakeflow Job
+-----------------------
+jobs&pipeline/job runs in DE section.
+Create a folder-> new notebook-> 
+CREATE VOLUME databricksnithya.bronze.jobvolume
+Create a folder inside that columne -> raw 
+df = spark.read.format("csv")
+	.options("header", 'true', inferSchema = 'true')\
+	.load("/Volumes/databricksnithya/bronze/bronzevolume/stores/")
+df.write.format("delta")\
+             .mode("overwrite")\
+              .save("/volumes/databricksnithya/bronze/jobvolume/raw/stores")
+
+Note - Try to use the SQL files instead of SQL queries because of its capabilities/options
+In sql file - SELECT * FROM delta.`/Volumes/databricksnithya/bronze/jobvolume/raw/stores/`
+
+job window-> job-> add all your configurations. flow contrpls using if/else, for each ....
+
+Dynamic Reference - examplereferencing the putput from one file or job to an another 
+SET TASK VALUES - if you want to pass the result of one file to another we have to define task values.
+ex - sql file you can return the output as a list, dbutils,jobs.taskValues.set(key="key", value= "value")
+
+you can pass the outrput from one tasks to other tasks using the dbutils.jobs.taskValues.get("","")
+you can give sql rows a soutput and give as array.
+create the text - dbutils.widgets.text("sql_output", "')
+sql_output_text = dbuti;s.widgets.get("sql_output")
+sql_output_text
+
+from pyspark.sql.functions import *
+sql_output_list = eval(sql_output_text)
+sql_output_list
+for each 
+once you create the flow -> add the parameter key = sql_output, value = {{tasks.dynamic_sql.output.rows}}
+
+ex2 - Passing large array with notebook
+notebook1 - data ingestion
+--------------------------------
+dbutils.widgets.text("folder_name", "")
+dbutils.widgets.text("parent_folder_name", "")
+folder_name = dbutils.widgets.get("folder_name")
+parent_folder_name = dbutils.widget.get("parent_folder_name")
+
+df = spark.read.format("csv")\
+	.option("header", "true")
+	.option("inferschema", "true")
+	.load(f"/Volumes/databricksnithya/bronze/{parent_folder_name}/{folder_name}/")
+df.write.format("delta")\
+	.mode("overwrite")\
+	.save(f"/Volumes/detabricksnithya/bronze/jobvolume/raw/{parent_folder_name}/{folder_name}customerss/")
+
+ex-3 or sql table
+notebook - lookup_ingestion
+----------------------------------
+myarray = [ 
+	{
+"parent_folder_name" : "raw",
+"folder_name" : "customers"
+},
+{
+"parent_folder_name" : "raw",
+"folder_name" : "sales"
+},
+{
+"parent_folder_name" : "raw",
+"folder_name" : "products"	
+                  }
+	]
+
+making availbale for other activities - dbutils.jobs.taskValues.set("myarray", myarray)
+
+in jobs ->  create job -> select lookyp ingestion notebook ->add task -> add notebook -> select data ingestion -> type -foreach -> arary {{tasks.lookup.values.myarray}} -> concurrency if needed -> key - parent_folder_name, foldeR_name , value = {{input.parent_folder_name}}, {{input.folder_name}} -> enable performance optimized  -> run
+
+if needed we can add condition in lookuo ingestion file 
+length_array = len(myarray)
+dbutils.jobs.taskValues.set("length_array", length_array)
+go to jobs  -> add if else task -> depends on lookup -> task name -> condition = {{tasks.lookup.values.length_array}} == 0 -> atatch the procxess method -> if false nothing  since we have array length  it's a  success.
+
+Large array with SQL table
+---------------------------------
+CREATE TABLE databricksnithya.bronze.lookup_table
+(
+	parent_folder_name STRING,
+	folder_name STRING
+)
+
+INSERT INTO databricksnithya.bronze.lookup_table
+VALUES(
+	('raw', 'customers'),
+	('raw', 'products'),
+	('raw', 'sales')
+)
+
+create new sql file -> lookup_sql.sql
+SELECT * FROM databricksnithya.bronze.lookup_table
+
+new job - SQL lookup
+add this sql file -> new task -> for each -> {{tasks.lookup_sql.output.rows}} -> add task to loop over -> add the source (data_ingestion)-> parameters -> parent_folder_name : {{input.parent_folder_name}}, folder_name : {{input.folder_name}}
+
+SCHEDULES AND TRIGGERS
+======================
+You can schedule jobs at the perticular interval without manual effort.
+Trigger type - scheduled(time based) , file arrive (storage Event), Continuous (continuous running/streaming)
+
+Compute for Jobs
+================
+In the jobs you have compute section just for compute lol.
+
+Job Monitoring
+==============
+in jobs & pipelines you have job runs and tell you details about the jobs.
+
+Notification
+============
+In jobs you have the notifications  and you can send your conditions set to get the notifications.
+
+
+DELTA LIVE TABLES 
+=================
+Like a ETL frame work within databricks.  
+Declarative Framework - you just focus on what you need to achieve and its a automated ETL framework.
+Delta Live Tables is a declarative framework in Databricks that lets you build reliable, automated data pipelines using SQL or Python.
+Job is a Orchestration framework not same as a DLT, it is like a activity in jobs.
+Advantageeeeeees of DLT
+-----------------------
+Data ingestion
+Data transformation
+Pipeline Management
+Quality checks
+Incremental processing
+
+Core Components of DLT
+----------------------
+Streaming Tables - process the data streaming mode.
+Materialized views - process the data in batch mode.
+Temporaray views  - normal view, streaming view., which is just the query of the data.
+
+yes
+jobs & pipeline -> ELT pipeline or direct DLt pipeline -> use ETL editor
+for better ease enable ELT Pipeline multi-file editor
+
+
+jobs & pipeline -> ETL pipeline -> <name> -> pick your workspace -> pick/create your schema(target schema where all the DLt objects are created) -> start with sample code with python or any advaced options -> creats a sample project structures.
+Folder structure -
+DLT_Demo_1
+	explorations
+	transformations
+	utilities
+	README.md 
+
+Root Folder - Entire parent repository. Basically you store the location or you can say folders for your source code. (DLT_Demo_1)
+Note - Databricks recommends donot delete any folder like outside of the DLT area ouside of the asset browser. If you want to add/ delete or any thing just do it from the asset browser. why - because it will autosync all the code from asset browser if you change form outside of DLt or asset browser it doesn't know how you chnage the repository.
+
+Source code files - you can create a source code folder and then you can register telling that what ever the code in this source code folder will act as a source code. By default in the abovce structre the entire transformation folder is registerd as aa source code.In some scenarios you can even include external files as a source files too..
+
+Exploration - directly no alligned to your code but alligned to your project. Like EDA,  notebooks for ease.
+
+Utilities - if you have some modules that you want to manually import or if you have some wheels,you can add here in utilities
+
+In case if you already have the projet struct and you want to create from existing one - ot will ask you what is your pipeline root folder and whats your source code paths.
+Dry Run - Delat live tables give us the opportunity to see the output before even running the pipeline and all the outputs.
+
+Note - you can evemn publish the event logs to metastore ...
+
+source_file.py 
+#Create a streaming table
+import dlt
+@dlt.table(
+	name = 'demo_stream_table'     #if table is not given it will pick function name as table name
+)   
+def demo_stream_table():
+	df = spark.readStream.table("databricksnithya.silver.sales_enr")
+	return df
+	
+#create materialized view
+
+@dlt.table(
+	name = 'demo_mat_view'
+)
+def demo_mat_view():
+	df = spark.read.table(                     #represents batch data 
+			"databricksnithya.silver.sales_enr")
+		return df
+	)  
+
+#creat temporary view(batch)
+@dlt.view(
+	name = 'demo_temp_view'
+)
+def demo_temp_view():
+	df = spark.read.table("databricksnithya.silver.sales_enr")
+
+#Temporaray VIEW (STREAM)
+@dlt.view(
+	name = 'demo_stream_view'
+)
+def demo_stream_view():
+	df = spark.readStream.table("databricksnithya.silver.sales_enr")
+	return df
+
+Note - When ever you are using streaming table, you have to use the source which is append only source , your table cannot be changed, if it is chaging then use below command - spark.readStream.option("skipChangeCommits", True).table("databricksnithya.silver.sales_enr")
+
+
+DLT Pipeline - transformations
+------------
+
+RAW
+@dlt.table(
+	name = "sales_stg"
+)
+def sales_stg():
+df = spark.readStream.option("skipChangeCommits", True) \
+	.table("databricksnithya.silver.sales.env")
+	return df
+
+Note - you can nly create streaming views on top of streaming tables, you cannot create a streaming view on top of the map view nor on the normal view. because streaming view should have the source called Streaming Table.
+you can create a mat view on top of streasming table.
+
+ENRICHED
+CREATE MAT view 
+form pyspark.sql.functions import *
+@dlt.table(
+	name = 'sales_trn
+)
+def sales_trn():
+	df = spark.read.table("sales_stg")
+	df = df.withColumn("priceAfterDiscount", col('total_amount') - col('discount'))
+	return df
+
+CURATED 
+@dlt.table(
+	name = 'sales_curr'
+)
+def sales_cur():
+	df = spark.read.table("sales_enr")
+
+
+in explorations
+---------------
+create notebook -> explore 
+df = spark.read.table("databricksnithya.silver.sales_enr")
+display(df)
+
+
+Delta Live Tables with Autoloader
+---------------------------------
+import dlt
+from pyspark.sql.functions import *
+ #CREATE STREAMING TABLE (USING AUTOLOADER)
+Note - Because we do not have a table, a delta table, or you can say delta source as our source query, so in that particular scenario you have to leverage the autoloader.
+
+@dlt.table(
+	name = 'autovol_table
+)
+def autovol_table():
+	df = spark.readStream.format("cloudFiles")\
+			.option("cloudFiles.format", "csv")\
+			.load("/Volumes/databricksnithya/bronze/autovol/raw/"
+			)
+	return df17802989
+
+
+# CREATING STREAMING TABLES
+
+@dlt.table(
+	name = 'autovol_table_enr
+)
+def autovol_table_enr():
+	df = spark.read.table("autovol_table")
+	df = df.withColumn("flag", list("yes"))
+	return df
+
+DLT Append Flow API
+-------------------
+SCenario - an empty streaming getting appended by two tables.
+
+import dlt
+
+
+# Create empty streaming table
+@dlt.create_streaming_table(
+	name = 'append_table'
+)
+
+#Create flow 1
+@dlt.append_flow(
+	target = 'append_table'
+)
+def flow_1():
+	df = spark.readStream.format("cloudFiles")\
+			.option("cloudFiles.format", "csv")\
+			.load("/volumes/databricksnithya/bronze/autoval/flow1/)
+	return df
+
+
+#Create flow 2
+@dlt.append_flow(
+	target = 'append_table'
+)
+def flow_2():
+	df = spark.readStream.format("cloudFiles")\
+			.option("cloudFiles.format", "csv")\SS
+			.load("/volumes/databricksnithya/bronze/autoval/flow2/)
+	return df
+
+Apply changes/Auto CDC - directly might be related to UPSERT
+-------------------------------------------------------------
+AUTO_CDC_FLOW - is a declarative method used to implement change data capture (CDC) logic. It helps you apply INSERTs, UPDATEs, and DELETEs automatically from a streaming source (like data with CDC events) to a target Delta Table.
+ Slowly changing dimensions
+ ----------------------------
+ Type1 - UPSERT
+ Type2 - UPSERT + History
+ into exploratios folder
+CREATE TABLE databricksnithya.bronze.source
+(
+	product_id INT,
+	product_name STRING,
+	processDate TIMESTAMP
+)
+
+INSERT INTO databricksnithya.bronze.source
+VALUES 
+(1, 'honey', current_timestamp()),
+(2, 'milk', current_timestamp()).
+(3, 'bread', current_timestamp())
+
+into transformations foler -scd.py
+import dlt
+from pyspark.sql.functions import *
+
+#Staging table
+@dlt.table(
+	name = scd1_stg
+) 
+def scd1_stg():
+	df = spark.readStream.table("databricksnithya.bronze.source")
+	return df
+
+#CREATE AN EMPTY STREAMING TABLE
+dlt.create_streaming_table(
+	name = scd1_table
+)
+
+dlt.create_auto_cdc_flow(
+	source = "scd1_stg",
+	target = "scd1_table",
+	key = ["product_id"],
+	sequence_by = col("processDate"),
+	stored_as_scd_type = 1
+)
+
+
+SCD Type - 2
+-------------
+
+dlt.create_streaming_table(
+	name = scd2_table
+)
+
+dlt.create_auto_cdc_flow(
+	source = "scd2_stg",
+	target = "scd2_table",
+	key = ["product_id"],
+	sequence_by = col("processDate"),
+	stored_as_scd_type = 2,
+	except_column_list = ["processDate"]     #which doesn't allow to kjeep that colum n 
+)
+Note - here in the SCD Type2 we will have additional column "_START_AT" and "_END_AT"
+
+Data Quality with DLT Expectations
+----------------------------------
+Expectations - Expectations are like data quality rules that you define within your pipeline to check whether your data meets certain conditions.
+ex - I expect this column to never be null, I expect values in this column to be within a certain range etc...
+
+Filter out corrupted data.
+---------------------------
+import dlt
+
+expectations = {
+	"rule1" : "product_id IS NOT NULL",
+	"rule2" : "category IS NOT NULL"
+}
+
+@dlt.table(
+	name = "expect_table
+)
+@dlt.expect_all(expectations)   # euivalent to warning function  
+
+def expect_table():
+	df = spark.read.table("databricksnithya.silver.products_enr)
+	return df
+
+Parameterize the DLT Pipeline
+-----------------------------
+In settings -> configuration -> add configuration -> KV 
+
+table_name = spark.conf.get("table_name")
+def expect_table():
+	df = spark.read.table(f"databricksnithya.silver.{table_name}")
+	return df
+
+DLT END-TO-END PROJECT 
+-----------------------
+Jobs & pipelines -> ELT pipeline -> explorations, transformations, utilities  ->move the root folder based on needs. 
+transformations -> bronze -> ingestion.py
+ingestion.py
+------------
+import dlt
+#Ingesting sales data
+@dlt.table(
+	name = 'sales_bronze'
+)
+def sales_bronze():
+	df = spark.readStream.format("cloudFiles")\
+				 option("cloudFiles.format", "csv")\
+				.load("/Volumes/databricksnithya/bronze/bronze_volume/sales/")
+	return df
+
+#Ingesting stores data
+@dlt.table(
+	name = 'stores_bronze'
+)
+def sales_bronze():
+	df = spark.readStream.format("cloudFiles")\
+				 option("cloudFiles.format", "csv")\
+				.load("/Volumes/databricksnithya/bronze/bronze_volume/stores/")
+	return df
+
+#Ingesting products data
+@dlt.table(
+	name = 'products_bronze'
+)
+def sales_bronze():
+	df = spark.readStream.format("cloudFiles")\
+				 option("cloudFiles.format", "csv")\
+				.load("/Volumes/databricksnithya/bronze/bronze_volume/products/")
+	return df
+
+#Ingesting customers data
+@dlt.table(
+	name = 'customers_bronze'
+)
+def sales_bronze():
+	df = spark.readStream.format("cloudFiles")\
+				 option("cloudFiles.format", "csv")\
+				.load("/Volumes/databricksnithya/bronze/bronze_volume/customers/")
+	return df
+
+transformations -> silver -> sales_silver.py
+
+import dlt
+import pyspark.sql.functions import *
+
+#STREAMING VIEW
+@dlt.view(
+	name ="sales_silver_view"
+)
+def sales_silver_view():
+	df_sales = spark.readStream.table("sales_bronze")
+	df_sales = df_sales.withColumn("pricePerSale", round(col("total_amount")/
+				col("quantity"), 2))
+
+	df_sales = df_sales.withColumn("processDate", current_timestamp())
+	return df_sales
+
+
+# SALES SILVER TABLE (WITH UPSERT)
+dlt.create_streaming_table(name = "sales_silver)
+dlt.create_auto_cdc_flow(
+	source = "sales_silver_view",
+	target = "sales_silver",
+	key = ["sales_id"],
+	sequence_by = col("processDate"),
+	stored_as_scd_type = 1s
+)
+
+
+transformations -> silver -> store_silver.py
+
+@dlt.view(
+	name ="stores_silver_view"
+)
+def sales_silver_view():
+	df_stores = spark.readStream.table("stores_bronze")
+	df_stores = df_stores.withColumn("store_name", regexp_replace(col("store_name"), "_", ""))
+	df_stores = df_stores.withColumn("processDate", current_timestamp())
+	return df_sales
+
+
+# STORES SILVER TABLE (WITH UPSERT)
+dlt.create_streaming_table(name = "stores_silver)
+dlt.create_auto_cdc_flow(
+	source = "stores_silver_view",
+	target = "stores_silver",
+	key = ["store_id"],
+	sequence_by = col("processDate"),
+	stored_as_scd_type = 1s
+)
+
+transformations -> silver -> products_silver.py
+
+@dlt.view(
+	name ="products_silver_view"
+)
+def sales_silver_view():
+	df_products = spark.readStream.table("products_bronze")
+    df_products = df_products.withColumn("processDate", current_timestamp())
+	return df_products
+
+
+#productsS SILVER TABLE (WITH UPSERT)
+dlt.create_streaming_table(name = "products_silver)
+dlt.create_auto_cdc_flow(
+	source = "products_silver_view",
+	target = "products_silver",
+	key = ["prod_id"],
+	sequence_by = col("processDate"),
+	stored_as_scd_type = 1s
+)
+ 
+transformations -> silver -> customers_silver.py
+
+@dlt.view(
+	name ="custs_silver_view"
+)
+def custs_silver_view():
+	df_custs = spark.readStream.table("custs_bronze")
+	df_custs = df_custs.withColumn("name", upper(col("name")))
+	df_custs = df_custs.withColum("domain", split(col("email"), "@"[1]))
+    df_custs = df_custs.withColumn("processDate", current_timestamp())
+	return df_custs
+
+
+#custsS SILVER TABLE (WITH UPSERT)
+dlt.create_streaming_table(name = "custs_silver)
+dlt.create_auto_cdc_flow(
+	source = "custs_silver_view",
+	target = "custs_silver",
+	key = ["custs_id"],
+	sequence_by = col("processDate"),
+	stored_as_scd_type = 1s
+)
+
+What will be the source of your gold table? - Gold table will be slowly changing dimension, it will be views,not the tables because streaming tables can be changed.But if you want to use slowly changing dimensions, that means we will be creating, lets say streaming tables and for that we have to use something called as append only source.
+And whenever we are using streaming views for our slowly changing dimension source, then we can leverage views because this will not bring the changed data.This will only bring the new data which will be inserted here.
 
 transformation -> gold -> fact_sales.py
 import dlt
