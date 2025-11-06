@@ -91,11 +91,22 @@ dlt.create_auto_cdc_flow(
     except_column_list = ['processDate']
 )
 
+DLT Pileplines Modes
+====================
+Triggered Mode - Once the execution completed stop the processing.ex - .trigger(once= True)
+Continuous Mode - continous running but it is smart enough to track and trigger when the dependent data is changed or modified.
 
+Orchestrate
+===========
+Note - Job is just for orchestration, DLT is more for processing.
+jobs & pipeline -> create job -> tasks ...
 
+DLT Monitoring
+==============
+for each jobs you can monitor for each tasks and also you can see the expectations if you set the expectations.
 
-
-
+Unity Catalog Functions
+=======================
 
 
 
