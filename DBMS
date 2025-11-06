@@ -48,20 +48,9 @@ Hierarchial Databases - Data organized in tree-like structure(parent-child relat
 Network Databases - Data organized in a graph structure allowing many-to-many relationships.
     Similar to hierarchial databases but allows more flexible many-to-many relationships. Uses a graph-like structure with records(nodes) connected by relationships(edges). Data is accessed using pointers or paths.
     Data is stored in a graph structure where each record(node) is connected to others through links(edges).allowing for more flexible and intricate data relationships. Network Databases supports dynamic and flexible relationships, which makes it easier to adapt ti changes in data models over time.
-
 Object Oriented Databases - Databases that store data in the form of objects, similar to object-oriented programming languages.
-
-
-
-
-
-
-
-
-
-
-
-
+    Object Oriented Databases are similar to how they are defined in object-oriented programming(OOP). This allows fpr a natural alignment between the data structure and the application logic.
+    Object can inherit attributes and behaviors (methods) from parent classes, enabling code reuse and reducing redudancy. Ex- both student and teacher can inherit from a common person class, sharing properties like Name, DateOB , amnd address.
 
 
 
