@@ -52,6 +52,39 @@ Object Oriented Databases - Databases that store data in the form of objects, si
     Object Oriented Databases are similar to how they are defined in object-oriented programming(OOP). This allows fpr a natural alignment between the data structure and the application logic.
     Object can inherit attributes and behaviors (methods) from parent classes, enabling code reuse and reducing redudancy. Ex- both student and teacher can inherit from a common person class, sharing properties like Name, DateOB , amnd address.
 
+Database Management System
+==========================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
