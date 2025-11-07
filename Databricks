@@ -1040,9 +1040,28 @@ Unity Catalog Functions - Are actually you can see a kind of permanent functions
 
 Scalar Functions
 =================
-Scalar functionss
+Scalar functions which takes scalar parameters aSs input and generate the scalar output.
+The value will always be one.
+	scalar functions with sql
+	=========================
+	CREATE OR REPLACE FUNCTION  databricksnithya.bronze.sql_scalar_func(p_par INT)
+	RETURNS INT AS 
+	language SQL
+	RETURN p_par*10
 
+	%sql
+	SELECT databricksnithya.bronze.sql_scalar_func(total_amount) FROM databricksnithya.silver.sales_enr
 
+	Scalar functions with python
+	============================
+	A very good advantage of python functions is customizable.
+	CREATE OR REPLACE FUNCTION databricksnithya.bronze.python_scalar_func(p_par INT)
+	RETURNS INT
+	LANGUAGE PYTHON
+	AS
+	$$
+	RETURN p_par*10
+	$$
 
 
 
