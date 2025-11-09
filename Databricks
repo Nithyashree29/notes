@@ -1063,6 +1063,55 @@ The value will always be one.
 	RETURN p_par*10
 	$$
 
+    User Defined Table Functions - UDTFs
+    =====================================
+    %sql
+	CREATE OR REPLACE FUNCTION databricksnithya.bronze.python_scalar_fubc_cust(p_par INT)
+	RETURNS STRING
+	LANGUAGE PYTHON
+	AS
+	$$
+		import requests
+		response = requests.get(f"okjhkjhljljdjsasssss{p_par}").json()
+		response_str = str(response)
+		return response_str
+	$$
+
+    
+Create custom UDTF's
+=====================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
