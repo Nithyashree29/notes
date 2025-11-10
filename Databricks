@@ -1100,6 +1100,56 @@ Why Delta Sharing - you can access the metstores of multiple workspaces used eas
 Delta Sharing Types
 ====================
 D2D Databricks To Databricks - Both the data of the workspaces(attached to different metastore, and we have workspaces attached to the different Metastore) are on the Databricks and they want to talk to each other.
+ex- for internal or cross-organization use, if both are on Databricks.
+Open Delta Sharing - for external users, via open-source Delta Sharing client.
+
+How Does Delta Sharing Work
+===========================
+Note - when two workspaces++ are communicating and you want another workspace to share the catalog of the other workspaces them what this delta sharing does is it needs the identifier of the other catalog whihc needs to share the catalog information from another workspace and Delta sharing tells that i will register that particular idenfier in my logs and i will say, hey this catalog can be read.
+the above is from databricks to databricks and hence its simple.
+
+Catalog Explorer -> Deltasharing(you an find many options otehr than delta sharing) -> shared by mae -> new recipient -> add reipent -> create 
+share data -> add data assets -> add notebooks -> add recipeints.
+
+Data Governance
+================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
