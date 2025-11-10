@@ -1113,6 +1113,8 @@ share data -> add data assets -> add notebooks -> add recipeints.
 
 Data Governance
 ================
+Pillers of data gorvernance 
+	1. Data Discoverability - What ever you need to find about data , it is data discoverability and unity catalog provies an amazing user interface to actually work with data discoverability.
 
 
 
