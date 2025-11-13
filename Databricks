@@ -1115,7 +1115,12 @@ Data Governance
 ================
 Pillers of data gorvernance 
 	1. Data Discoverability - What ever you need to find about data , it is data discoverability and unity catalog provies an amazing user interface to actually work with data discoverability.
-
+	2. Data Quality - ex : Data quality in delta live tables using expectations, In normal warehouses we manage data quality of tables uisng constraints.You can ue the "quality" tab to create monitor for  table in Databricks.
+	3. Data Collaboration/delta sharing - You can only share the catalog with the workspaces which are attached to the same metastore. What if your Databricks workspace is atatched to a different Metastore and the target workspace which you want to share the data is atatched to the different metastore.In Delta share you can share data using 
+		1. Open shource delta sharing.
+		2. Databricks Delta Sharing.
+		To do that you need to register the whole catalog as Foreign catalog (remember lakehouse federation is also resonsible for creating Foreign catalogss.
+	4. Data Access control
 
 
 
