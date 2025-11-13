@@ -1142,6 +1142,11 @@ Pillers of data gorvernance
 Databricks Apps
 ===============
 Databricks Apps let you buld interactive web applications inside Databricks using toold like Dash, Streamlit, or Plotly.You can turn your notebooks or dashboards into apps that others can easily open and use without needing to understand or edit the code.
+Key Features
+	*No extra setup - u dont need to spin up a separate web sever.
+	*Supports popular tools: Use python-based toold like streamlit, Dash, and Panel.
+	*UI built-in : Add sliders, dropdowns, checkbozes, etc. to create a UI for your data.
+	*Secure & Shareable: You can share the app with your team using worksoace permissionss.
 
 
 
