@@ -1139,7 +1139,9 @@ Pillers of data gorvernance
 		SET ROW FILTER databricksnithya.silver.rls_func ON (region)
 	7. Uers & Groups
 
-
+Databricks Apps
+===============
+Databricks Apps let you buld interactive web applications inside Databricks using toold like Dash, Streamlit, or Plotly.You can turn your notebooks or dashboards into apps that others can easily open and use without needing to understand or edit the code.
 
 
 
