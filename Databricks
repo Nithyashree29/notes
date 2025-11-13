@@ -1121,7 +1121,23 @@ Pillers of data gorvernance
 		2. Databricks Delta Sharing.
 		To do that you need to register the whole catalog as Foreign catalog (remember lakehouse federation is also resonsible for creating Foreign catalogss.
 	4. Data Access control
-
+ 	5. Data Masking
+		Dynamic Data Masking
+		CREATE OR RPLACE FUNCTION databricksnithya.silver.dynamic_msk(p_mail STRING)
+		RETURNS STRING
+		RETURN CASE WHEN is_account_group_member('developers') THEN p_email ELSE '***' END
+	6. Row Level Security 
+		SELECT * FROM databricksnithya.silver.rls_mapping
+		CREATE OR REPLACE FUNCTION databricksnithya.silver.rls_func(p_region STRING)
+		RETURNS BOOLEAN
+		RETURN EXISTS(
+			SELECT * FROM databricksnithya.silver.rls_napping
+			WHERE
+			user_if = current_user() AND
+			region = lower(p_region))
+		ALTER TABLE databricksnithya.silver.stores_enr
+		SET ROW FILTER databricksnithya.silver.rls_func ON (region)
+	7. Uers & Groups
 
 
 
