@@ -1153,6 +1153,109 @@ Delta lake Optimization
 OPTIMIZE Command - Coalese the small files into big files.
 	OPTIMIZE delta.`/Volumes/databricksnithya/bronze/bronze_volume/deltafiles/`
 ZORDERBY - Sorts the data and also captures the column statistics. backbone for data skipping.
+OPTIMIZE delta.`/Volume/databricksnithya/bronze/bronze_volumne/deltafiles/` ZORDER BY id
+LIQUID CLUSTERING (Say no to partitions) -Creating logical clusters automatically and changes with time.Auto evolving in lakehouse Data Engineering.
+	CREATE TABLE databricks.nithya.broze.liquidtable
+	(
+		id INT,
+		salary DOUBLE,
+	)
+	CLUSTER BY (id)
+
+	ALTER TABLE databricks.nithya.broze.liquidtable
+	CLSUTER BY none/AUTO
+	you can enable the existing tables by altering the table.
+DATA VERSIONING - Everything is being recorded as a table versionss. Delta lake huarantees that you can perform commit and rollback similar yto  SQL.
+	DESCRIBE HISTORY delta. `/Volume/databricksnithya/bronze/beomze_volumne/deltafiles/`
+TIME TRAVEL - RESTORE delts.`//Volume/databricksnithya/bronze/beomze_volumne/deltafiles/` TO VERSION AS OF 5
+VACCUM COMMAND - Note : delta lake newver removes the files.valid for 30 days.
+	This command will remove all the unnecessary files which are not being used by your table. and removes only files which are older than 7 days.
+	VACUUM delta.`/Volume/databricksnithya/bronze/beomze_volumne/deltafiles/' (with precaution you can  add DRY RUN)
+	SET spark.databricks.delta.retentionDurationCheck.emnables = False;
+	VACUUM delta.`/Volume/databricksnithya/bronze/beomze_volumne/deltafiles/' RETAIN 0 HOURS 
+CTAS - Copy Table As Select, which can be used  to create a table on top of your akready existed table.
+	CREATE TABLE databricksnithya.silver.ctas
+	AS
+	SELECT * FROM databricksnithya.silver.sales_enr
+Deep CLONE - competitor for CTAS, Clone the data + Delta Log aswell!
+	CREATE TABLE databricksnithya.silver.deepclone
+	CLONE databricksnithya.silver.sales_enr
+Shallow CLONE - Light weight clone , where just the delta log will be clone no data clone happens.
+	You just query and have the metadata information and the data will be coming from the original source.Highly dependent on source
+	CREATE TABLE databricksnithya.silver.shallow
+	SHALLOW CLONE databricksnithya.silver.sales_enr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
