@@ -1185,7 +1185,7 @@ Shallow CLONE - Light weight clone , where just the delta log will be clone no d
 	CREATE TABLE databricksnithya.silver.shallow
 	SHALLOW CLONE databricksnithya.silver.sales_enr
 
-
+CI/CD
 
 
 
