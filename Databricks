@@ -1148,6 +1148,13 @@ Key Features
 	*UI built-in : Add sliders, dropdowns, checkbozes, etc. to create a UI for your data.
 	*Secure & Shareable: You can share the app with your team using worksoace permissionss.
 
+Delta lake Optimization
+=======================
+OPTIMIZE Command - Coalese the small files into big files.
+	OPTIMIZE delta.`/Volumes/databricksnithya/bronze/bronze_volume/deltafiles/`
+ZORDERBY - Sorts the data and also captures the column statistics. backbone for data skipping.
+
+
 
 
 
