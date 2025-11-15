@@ -1202,6 +1202,17 @@ ASSET Bundles
 =============
 	Databrciks Asset Bundles are a way to package, configure, and deploy Databricks resources (like notebooks, woprkflows, ML models, dashboards, etc.) as a single bundle.
 	Think of them as an infrastructure-as-code approach for Databricks, where you define your projects assets and how they should be deployed into a workspace, similar to how Teeraform Helm works in other exosystremss.
+	*A bundle is defined with a YAML file (usaually bundle.yaml).
+	*You can define multiple environments in the same bundle.
+	*Bundles are deployed with the Databricks CLI.
+Since bundles are just code + configs, they integrate well with GitHub, Azure DevOpa, etc for CI/CD.
+use termial
+	+cd <your desired path>
+	databricks bundle init
+		dab tutorial name
+		yes, yes, yes...
+	creates a folder structure for you.
+Always try to create a dedicated folder for each type of resources.This way it is easier for debugging ad what not.
 
 
 
