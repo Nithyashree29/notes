@@ -1227,12 +1227,21 @@ databricks.yml
 			default: true
 			workspace:
 				host: <host.com>
+				root_path: <give root path where you want to see it>
 			permissions:
 				-group_name: admins
     				level: CAN_MANAGE
 			presets:
 				name_prefix: ${workspace.current_user.short_name.nithya}
 				source_linked_deployment: false
+		prod:
+			mode: production
+			workspace:
+				host: ssssssssssssssssssssssssssssssssssssssa
+				root_path: <give root path where you want to see it>
+      		permissions:
+				-user_name: <name/email>
+				level: CAN_MANAGE
 Adding Jobs in  Asset Bundle
 ============================
 Note - try to use th yaml to give job details , for example in jobs and pipelines when you create a job and click on it get the yml view and copy and paste.
@@ -1249,7 +1258,44 @@ in the databricks created folder -> jobs -> jobs_1.yml file
 					enables: true
 				performance_target: STANDARD
 
+Adding DLT BUNDLE TO THE PIPELINE
+=================================
+jobs & Pipelines -> create ETL pipeline -> start with sampe code in pipeline
+	pipelines
+		explorations
+		transformations
+			demo.py 
+		utilities
 
+demo.py
+=======
+import dlt
+
+@dlt.table
+def demo_table_dab():
+	return spark.range(100)
+copy the yaml code of this pipeline - yes
+
+go to -> folder -> resources -> pipelines -> pipeline1.yml (copy the yml details )
+id: ssssssssssssssssssssssaaaaaaaaaaaaaa
+pipeline_type: WORKSPACE
+name: pipeline1
+libraries:
+	-glob:
+		include: ../../src/pipeline1/transformations/**
+schema: default
+continuous: false
+development: false
+photon: true
+channel: CURRENT
+catalog: databricksansh
+serverless: true
+root_path: ../../src/pipeline1
+
+ASSET BUNDLE VALIDATION
+=======================
+folder -> scratch -> exploration -> terminal 
+	databricks bundle summary --target dev
 
 
 
