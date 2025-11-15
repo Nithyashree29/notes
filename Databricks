@@ -1214,8 +1214,40 @@ use termial
 	creates a folder structure for you.
 Always try to create a dedicated folder for each type of resources.This way it is easier for debugging ad what not.
 
-
-
+databricks.yml
+	bundle:
+		name: dab_tutorial
+		uuis : assssssssssssssssssssssssassss
+	include:
+		- resources/*.yml
+		- resources/8/*.yml
+	targets:
+		dev:
+			mode: development
+			default: true
+			workspace:
+				host: <host.com>
+			permissions:
+				-group_name: admins
+    				level: CAN_MANAGE
+			presets:
+				name_prefix: ${workspace.current_user.short_name.nithya}
+				source_linked_deployment: false
+Adding Jobs in  Asset Bundle
+============================
+Note - try to use th yaml to give job details , for example in jobs and pipelines when you create a job and click on it get the yml view and copy and paste.
+in the databricks created folder -> jobs -> jobs_1.yml file
+	resources:
+		job:
+			jobs_1:
+				name: jobs_1
+				tasks:
+				  - task_key: ingestion
+				    notebook_task:
+					notebook_path: ../../src/notebooks/data_ingestion.ipynb
+				queue:
+					enables: true
+				performance_target: STANDARD
 
 
 
