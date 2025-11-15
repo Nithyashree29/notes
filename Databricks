@@ -1309,6 +1309,10 @@ terminal -> cd to your folder path
 databricks bundle destroy --target dev
 .bundle folder will be there but inside everything will be cleaned up.
 
+How ASSET BUNDLES TRACK CHANGES
+===============================
+Inthe deployed bundles folders you can see the sync-snapshots -> 7823ujsdjksdnfoiu34985rss.json -> stores all the information here.
+
 
 
 
