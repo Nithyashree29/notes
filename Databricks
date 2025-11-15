@@ -1227,21 +1227,22 @@ databricks.yml
 			default: true
 			workspace:
 				host: <host.com>
-				root_path: <give root path where you want to see it>
 			permissions:
 				-group_name: admins
     				level: CAN_MANAGE
 			presets:
 				name_prefix: ${workspace.current_user.short_name.nithya}
-				source_linked_deployment: false
+				source_linked_deployment: false  (if not the development moe, willl always pick your files from the source directory instead of the ".bundle" directory)
 		prod:
 			mode: production
 			workspace:
-				host: ssssssssssssssssssssssssssssssssssssssa
+				host: ssssssssssssssssssssssssssssssssssssssa (changes when your workspaces chaange)
 				root_path: <give root path where you want to see it>
       		permissions:
 				-user_name: <name/email>
 				level: CAN_MANAGE
+				group_name: admin
+				level: CAN_RUN
 Adding Jobs in  Asset Bundle
 ============================
 Note - try to use th yaml to give job details , for example in jobs and pipelines when you create a job and click on it get the yml view and copy and paste.
@@ -1276,13 +1277,14 @@ def demo_table_dab():
 	return spark.range(100)
 copy the yaml code of this pipeline - yes
 
-go to -> folder -> resources -> pipelines -> pipeline1.yml (copy the yml details )
-id: ssssssssssssssssssssssaaaaaaaaaaaaaa
-pipeline_type: WORKSPACE
-name: pipeline1
-libraries:
-	-glob:
-		include: ../../src/pipeline1/transformations/**
+go to -> folder -> resources -> pipelines -> pipeline1.yml (copy the yml details by going through the settings.yml details )
+resources:
+	pipelines:
+		pipelines_pipeline1:
+			name: pipeline1
+			libraries:
+				-glob:
+					include: ../../src/pipeline1/transformations/**
 schema: default
 continuous: false
 development: false
@@ -1296,8 +1298,16 @@ ASSET BUNDLE VALIDATION
 =======================
 folder -> scratch -> exploration -> terminal 
 	databricks bundle summary --target dev
+	databricks bundle deploy --target dev
+	databricks bundle deploy --target prod
+ * Merge the changes to main babe.
 
-
+ASSET BUNDLE DESTORY
+====================
+To delete all the jobs all the pipelines which was created via the asset bundles.
+terminal -> cd to your folder path
+databricks bundle destroy --target dev
+.bundle folder will be there but inside everything will be cleaned up.
 
 
 
