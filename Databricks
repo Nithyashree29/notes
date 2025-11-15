@@ -1185,8 +1185,23 @@ Shallow CLONE - Light weight clone , where just the delta log will be clone no d
 	CREATE TABLE databricksnithya.silver.shallow
 	SHALLOW CLONE databricksnithya.silver.sales_enr
 
-CI/CD
+CI/CD - Databricks ASssets Bundles
+===================================
+Continuous integration continous development/deployment.
+Git & Barnches$ - Backbone of continous integration. 
+	Versions are maintained in hideen folder called ".git"
+	Remote Repo - No creation of branches in teh remote repo.
+	Local Repo - create branches in local repo and merge to main local and then merge to remote main or push your branch to remote and then merge to remote main directly.
+	Everytime make sure to pull the changes from remote repo to local repo.
+Databrick Repos
+===============
+	settings -> linked accounts -> add git credentials -> link -> vERIFY -> DONE
+	Workspace -> DAB -> git folder -> add repo url -> Create Git Folder (Clone of remote repo into your databricks local repo) -> create feature barmchs and work(make sure it installes databricks package i all repositories wen you create a feature branch babe).
 
+ASSET Bundles
+=============
+	Databrciks Asset Bundles are a way to package, configure, and deploy Databricks resources (like notebooks, woprkflows, ML models, dashboards, etc.) as a single bundle.
+	Think of them as an infrastructure-as-code approach for Databricks, where you define your projects assets and how they should be deployed into a workspace, similar to how Teeraform Helm works in other exosystremss.
 
 
 
