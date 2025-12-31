@@ -15,4 +15,5 @@ Centralized vs Embedded Teams
 Centralized : many Data Engineers in one team, knowledge sharing DE's supporting DE's, Prioritization can get complex.
 Embedded : Data Engineers in other ebgineering teams, DE gains deep domain knowledge, Islands of responsibility DE's can feel isolated.
 
+Common issues in the pipelines you're bound to face as a Data Engineer
 
