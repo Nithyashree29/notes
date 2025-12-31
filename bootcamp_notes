@@ -17,6 +17,9 @@ Centralized vs Embedded Teams
 Centralized : many Data Engineers in one team, knowledge sharing DE's supporting DE's, Prioritization can get complex.
 Embedded : Data Engineers in other ebgineering teams, DE gains deep domain knowledge, Islands of responsibility DE's can feel isolated.
 
+
+
+
 Common issues in the pipelines you're bound to face as a Data Engineer
 -Skewed pipelines that OOM.
 -Missing Data / schema change of the upstream data.
@@ -44,3 +47,25 @@ Small migrations
 If people need a lot more time migrate (a lot more painful)
   -Build a parallel pipeline that populates table_v2 while prodution gets migrated
   -After all references to production have been updates, drop prodution and rename table_v2(and all its references) to production.
+
+Business questions
+-Set an SLA on when you'll get back to people. Maybe its 2hours maybe it's a day?
+-Consolidate common questions into a document so you dont have to keep amswering the same questions over and over again.
+-Is this the same or different oncall from the pipeline oncall?
+-Make sure your analytics partners are looped in there!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
