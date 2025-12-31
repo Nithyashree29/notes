@@ -1,3 +1,5 @@
+Happy New Year, Seoul welcomes 2026 🎉🎉🍾🍾
+
 Zach's Bootcamp
 ===============
 The most common ownership model
@@ -16,4 +18,29 @@ Centralized : many Data Engineers in one team, knowledge sharing DE's supporting
 Embedded : Data Engineers in other ebgineering teams, DE gains deep domain knowledge, Islands of responsibility DE's can feel isolated.
 
 Common issues in the pipelines you're bound to face as a Data Engineer
+-Skewed pipelines that OOM.
+-Missing Data / schema change of the upstream data.
+-Backfill needs to trigger downstream data sets.
+-Business questions about where and how to use data.
 
+Fix Skew
+-Best Option
+  Upgrade to spark3 and enable adaptive query execution.
+  Bump up the executor memory and hope it's not more skewed later.
+  Update the job to include a skew join salt.
+
+Missing data / Schema Change
+Pre check your upstream data!
+  This will prevent your pipeline from running if its missing data!
+Track down the upstream qwner
+  Fill out a task/ticket/etc to have them fix the issue (Both unlock and long-term fix)
+
+Backfill triggers downstream pipelines
+Small migrations
+  Do a paralel backfill into table_backfill
+  if everythin looks good, do the "shell game"
+    -Rename production to production_old
+    -Rename table_bakcfill to production
+If people need a lot more time migrate (a lot more painful)
+  -Build a parallel pipeline that populates table_v2 while prodution gets migrated
+  -After all references to production have been updates, drop prodution and rename table_v2(and all its references) to production.
