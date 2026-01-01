@@ -66,7 +66,19 @@ Path forward for painful pipelines
 Note - hive is slow because it does everything on disk and it definitely gonna finish, where as Spark might actually fail.Saprk is more efficient but less reliable , more prone to OOM exceptions and more prone to Skew.
 Often sees an order of magnitude increase in efficieny,.Especially for pipelines that use high-cardinality GROUP BY and/or JOIN.
 Hive pipelines are more reliable but less efficient and the main reason for that is that because they do all the calculations on disk. Spark uses RAM and that can be a one great way ti improve the kind of efficiency of your pipeline and landing time.
+Sampling
+When should you sample?
+If directionality is what you care about, sampling is good enough. Make sure to consult a data scientist on this guarantee you get the best sample of the dataset.
+When should you not sample?
+If you need the entire data set fpr adding purposes, sampling won't work!
 
+Bucketing
+=========
+You have an expensive high-cardinality JOIN or Group By
+
+Large Cloud Bills
+IO is usually the number one cloud cost!
+Followed by compute and then storage!.
 
 
 
