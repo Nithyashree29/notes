@@ -80,6 +80,21 @@ Large Cloud Bills
 IO is usually the number one cloud cost!
 Followed by compute and then storage!.
 
+Too much IO can happen because:
+-Duplicate data models.
+-Inefficient pipelines(use cumulative design when possible)
+-Expensive backfills.
+-Not sampling.
+-Not subpartitioning your data correclty (predicate pushdown is your friend)
+
+Large IO and compute costs are correlated by:
+-Scanning too much data 
+-O(n^2) algorithms applied in UDF's (nested loops are usally bad)
+Large IO and Storage costs are correlated by:
+-Not leveraging Parquet file format effectively
+-Duplicate data models
+
+
 
 
 
