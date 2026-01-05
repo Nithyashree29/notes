@@ -1456,3 +1456,252 @@ for the above you can add that while creating a table.
 To remove CONSTRAINT -> ALTER TABLE orders_silver ADD CONSTRAINT timestamp_within_range;
 
 <!-- Streaming Duplicates eliminate while working with structured streaming -->
+from pyspark.sql.functions import *
+json_schema = "<schema>"
+batch_df = (spark.read
+				.table("bronze")
+				.filter("topic" = "orders")
+				.select(from_json(col("value").cast("string"), json_schem).alias("v))
+				.select("v.*")
+				.dropDuplicates(["order_id", "order_timestamp"])
+				.count()
+)
+
+deduped_df = (spark.readStream
+			.table("bronze")
+			.filter("topic" = "orders")
+			.select(from_json(col("value").cast("string"), json_schema.alias("v)))
+			.select("v.*")
+			.withWatermark("order_timestamp", "30 seconds")
+			.dropDuplicates(["order_id", "order_timestamp"])
+)
+Structured streaming can track state information for the unique keys in the data, this ensures that duplicates records do not exist within or between microbatchs.However, overtime, this state information will scale to represent all history. We can limit the amount of the state to be maintained by using Watermarking.
+
+However , when dealing with streaming duplication, there is another level of complexity compared to static data as each micro-batch is processed, we need also to ensure that records to be inserted are not already in the target table.
+
+def upsert_data(micro_batchdf, batch):
+	micro_batchdf.createOrReplaceTempView("orders_microbatch")
+	sql_query = """
+		MERGE INTO orders_silver a
+		USING orders_mirobatch b
+		ON a.order_id = b.order_is AND a.order_timestamp = b.order_timestamp
+		WHEN NOT MATCHED THEN INSERT +
+		"""
+	micro_batchdf.sparkSession.sql(sql_query)
+	#spark.sql(sql_query)  - in this particular case the spark session cannot be accessed from within the microbatch process. Instead we can access the local spark session from the microbatch dataframe as above. If the cluster is <10.5 is micro_batchdf._jdf.sparkSession().sql(sql_query)
+
+query = (deduped_df.writeStream
+			.foreachBatch(upsert_data)  # This provides the option to execute custom data writing logic on each micro batch of a streaming data.
+			.option("checkpointLocation", "<loc>")
+			.trigger(availableNow=True)
+			.start())
+query.awaitTermination()
+
+
+Slowly Changing Dimensions In Lakehouse
+=======================================
+Is a data management concept that determines how tables handle data which change over time. Whether you want to overwrite values or retain their history.
+Type 0 - No changes allowed, static/Append only.
+Type 1 - Overwrite No history retained (use delta time travel if needed)
+Type 2 - Add new row for each change and mark the old as obsolete (Retains full history of values)
+
+Can we use Delta Time Travel as SCD type ?- Delta Time Travel is not a long-term versioning solution. Delta time travel does not cale well in cost and latency to provide long term versioning solution and remember running a vacuum command will cause the table historical versions to be deleted.
+
+Type 2 SCD 
+==========
+
+def type2_upsert(microBatchDF, batch):
+	microBatchDF.createOrReplaceTempView("updates")
+	
+	sql_query = """
+		MERGE INTO books_silver
+		USING (
+			SELECT updates.book_id as merge_key, updates.*
+			FROM updates
+
+			UNION ALL
+
+			SELECT NULL as merge_key, updates.*
+			FROM updates
+			JOIN boks_silver ON Updates.book_id = books_silver.book_id
+			WHERE books_silver.current = true AND updates.price <> books_silver.price
+		) staged_updates
+		ON books_silver.book_id = merge_key
+		WHEN MATCHED AND books_silver.current = true AND books_silver.price <> staged_updated.price THEN
+			UPDATE SET current = false, end_date = staged_updates.updated
+		WHEN NOT MATCHED THEN
+			INSERT (book_id, title, author, price, current, effective_date, end_date)
+			VALUES (staged_updates.book_id, staged_updates.title, staged_updates.author, staged_updates.price, true, staged_updates.updated, NULL)
+		)
+		"""
+		microBatchDF,sparkSession.sql(sql_query)
+
+
+CREATE TABLE IF NOT EXISTS books_silver
+(book_id STRING, title STRING, author STRING, price DOUBLE, current BOOLEAN, effective_date TIMESTAMP, end_date TIMESTAMP)
+
+CREATE OR REPLACE TABLE current_books
+AS SELECT book_id, title,author, price
+	FROM books_silver
+	WHERE current IS TRUE
+
+Cange Data Capture
+==================
+Process of identifying changes made to data in the source and delivering those changes to the target.
+Row level changes- inserting new records, Updating existing records, Deleting existing records.
+Changes are logged at the source as events that contain both the data of the records along with metadata information.These metadata indicate whether the specified record was inserted, updated or deleted.In addition to a version number or timestamp indicating the order in which changes happened.
+
+In delta lake you can process CDC using MERGE INTO
+MERGE INTO target_table t
+USING source_updates s
+ON t.key_field = s.key_field
+WHEN MATCHED AND t.sequence_field <ss.sequence_field
+	THEN UPDATE SET *
+WHEN MACTHED and s.operation_field = "DELETE"
+	THEN DELETE 
+WHEN NOT MATCHED 
+	THEN INSERT *
+
+Note - MERGE can not be performed if multiple source rows matched and attempted to modify the same target row in DELTA table.
+CDC feed with multiple updates for the same key will generate an exception. to avoid use the latest record and can be achieved using rank window functions - rank().over(window)
+
+schema = "customer_id STRING, email STRING, first_name STRING, last_name STRING, gender STRING, street STRING, city STRING, country_code STRING, row_status STRING, row_time timestamp"
+
+cus_df = (spark.table("bronze")
+			.filter("topic = 'customer'")
+			.select(from_customer(col("value").cast("string"), schema).alias("v"))
+			.select("v.*")
+			.filter(col("row_status").isin(["insert", "update"])))
+
+Inorder to track the latest record as we can have multiple records with different status
+window =  Window.partitionBy("customer_id").orderBy(F.col("row_time").desc())
+ranked_df = (cus_df.withColumn("rank", rank().over(window))
+				   .filter("rank == 1")
+				   .drop("rank"))
+display(ranked_df)
+
+for streaming
+=============
+ranked_df = (spark.readStream
+				.table("bronze")
+				.filter("topic" = 'customer'")
+				.select(from_json(col("value").cast("string"), schema).alias("v"))
+				.select("v.*")
+				.filter(col("row_status").isin(["insert", "update"]))
+				.withColumn("rank", rank().over(window))
+				.filter("rank==1")
+				.drop("rank")
+)
+It throws an AnalysisException - Non-time-based windows are not supported on streaming Dataframes/Dataset;
+To avoid this we should use for each batch logic.
+
+def bacth_upsert(microBatchDF, batchId):
+	window =  Window.partitionBy("customer_id").orderBy(F.col("row_time").desc())
+	(microBatchDF.filter(col("row_status").isin(["insert", "update"]))
+				.withColumn("rank", rank().over(window))
+				.filter("rank==1")
+				.drop("rank")
+				.createOrReplaceTempView("ranked_updates"))
+
+    query = """
+		MERGE INTO customers_silver c
+		USING ranked_updates r
+		ON c.customer_id = r.customer_id
+			WHEN MATCHED AND c.row_time < r.row_time
+			THEN UPDATE SET *
+			WHEN NOT MATCHED
+			THEN INSERT *
+		"""
+	microBacthDF.sparkSession.sql(query)
+	
+CREATE TABLE IF NOT EXISTS customer_silver
+(customer_id STRING, email STRING, first_name STRING, last_name STRING, gender STRING, street STRING city STRING, country STRING, row_time TIMESTAMP)
+
+$Joining with the country lookup table
+query = (spark.readStream
+			.table("bronze")
+			.filter("topic = "customer")
+			.select(from_json(col("value").cast("string"), schema).alias("v"))
+			.select("v.*")
+			.join(broadcast(df_country_lookup), col("country_code") == col("code"), "inner")
+			.writeStrea=m
+			.foreachBatch(batch_upsert)
+			.option("checkpointLocation", "<path>")
+			.trigger(availableNow = True)
+			.start())
+query.awaitTermination()
+
+Delta lake CDF
+==================
+Delta Lake Change Data Feed automatically generate CDC feeds about Delta lake tables.
+Records row-level changes for all data written into delta table
+	row data + metadata (whether row was inserted, deleted, or updated)
+CDF is used to propagate incremental changes to downstream tables in a multi-hop architecture.
+If CDF is enabled on a table, It will automatically captures these changes, In the table changes, CDF records the row data along with the change_type, indicating whethe the specified row was inserted, updated or deleted and timestamp when the change was applied and the version number.
+SELECT * FROM table_changes('table_name', start_version, [end_version])
+
+Note - CDF is not enabled by default, you need to explicitely enable it
+New tables CREATE TABLE myTable(id INT, name STRING)
+			TBLPROPERTIES (delta.enableChangeDataFeed = true)
+existing table ALTER TABLE myTable
+			SET TBLPROPERTIES (delta.enableChangeDataFeed = True)
+CDF follow the retention policy of the table
+When running VACUUM, CDF data is also deleted.
+when to use CDF
+	Table's change include updates and/or deletes
+	Small fraction of records updated in each batch (from CDC feed)
+Don't use CDF when 
+	Table's change are append only.
+	Most records in the table updated in each batch.
+
+SELECT * FROM table_changes("customer_silver", 2)
+
+cdf_df = (spark.readStream
+			.format("delta")
+			.option("readChangeData", True)
+			.option("startingVersion", 2)
+			.table("customers_silver"))
+
+For tracking it will add a new directory calles -"_change_data" (which has parquet files recorded)
+
+We are going to see how to use CDF data to propagate changes to downstream tables.
+from pyspark.sql.functions import *
+fom pyspark.sql.windows import Windows
+
+def batch_upsert(microBatchDF, batchId):
+	window = Window.partitionBy("order_id", "customer_id").orderBy(col("_commit_timestamp").desc())
+	(microBatchDF.filter(col("_change_type").isin(["insert", "update_postimage"]))
+				 .withColumn("rank", rank().over(window))
+				 .filter("rank = 1")
+				 .drop("rank", "_change_type", "_commit_version")
+				 .withColumnRenamed("_commit_timestamp", "processes_timestamp")
+				 .createOrReplaceTempView("ranked_updates"))
+	query = """
+		MERGE INTO customers_orders c
+		USING ranked_updates r
+		ON c.order_id = r.order_id AND c.customer_id = r.customer_id
+			WHEN MATCHED AND c.pocessed_timestamp < r.processes_timestam
+				THEN UPDATE SET *
+			WHEN NOT MATCHED
+				THEN INSERT *
+			"""
+	microBatchDF.sparkSession.sql(query)
+
+CREATE TABLE IF NOT EXISTS customers_order
+()
+# Streaming query to write our new table customers_orders
+def process_customers_orders():
+	orders_df = spark.readStream.table("orders_silver)
+	cdf_cus_df = (spark.readStream
+						.option("readChangeData", True)
+						.option("startingVersion", 2)
+						.table("customers_silver"))
+	query = (orders_df
+				.join(cdf_cus_df, ["customer_id"], "inner")
+				.writeStream
+					.foreachBatch(batch_upsert)
+					.option("checkpointLocation", "<loc>")
+					.trigger(availableNow = True)
+					.start())
+	query.awaitTermination()
+process_customers_orders()
