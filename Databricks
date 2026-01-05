@@ -150,7 +150,7 @@ df.printSchema()
   
 df = df.withColumn("<new/col_name>", upper(col("name")))
 df = df.withColumn("<domain>", split(col("email"), "@")[1])
-display(df.groupBy("domain", agg(count(col("<name>")).alias("total_customers")).sort(col("total_customers").desc()))
+display(df.groupBy("domain", agg(count(col("<name>")).alias("total_customers")).sort(col("total_customers").desc())))
 df = df.withColumn("<new_col>", current_timestamp())
 #df.write.format("delta")\
 	#.mode("append/overwrite/ignore/error")
@@ -1314,136 +1314,145 @@ How ASSET BUNDLES TRACK CHANGES
 Inthe deployed bundles folders you can see the sync-snapshots -> 7823ujsdjksdnfoiu34985rss.json -> stores all the information here.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Ad hoc and interactive analysis benefits greatly from Storage Optimized instances, which can leverage Delta caching to accelerate performance. These instance types are tailored for high disk throughput, enabling faster reads and reduced latency for exploratory queries.
+
+
+The DESCRIBE DATABASE or DESCRIBE SCHEMA returns the metadata of an existing schema (database). The metadata information includes the database’s name, comment, and location on the filesystem. If the optional EXTENDED option is specified, database properties are also returned.
+
+In Spark Structured Streaming, we use trigger(availableNow=True) to run the stream in batch mode where it processes all available data in multiple micro-batches. The trigger will stop on its own once it finishes processing the available data.
+
+
+Lakehouse platform -
+Workspace - Data engineering, Data warehouse, Machine learning.
+Runtime - Spark, delta lake
+Cloud service - Azure, AWS, Google cloud
+
+Control plane, Databricks account (Recides in databricks) - web ui. cluster management, workflows, notebooks
+Dataplane . customer cloud account - cluster VMS, storage
+
+Spark - In-memory distributed data processing.
+Supported languages - Scala, python, SQL, R, Java
+Batch processing & Stream processing
+Structured, semi structured, & unstructured
+
+Databricks File system - DBFS
+-Distributed file system
+-preinstalled in databrricks clusters
+-Abstarction layer : data persisted to the underlaying cloud storage.
+
+Git folders - are special types of folders that provide source control for your data projects by integrating with git providers.
+
+Bronze Ingestion Patterns
+-Singleplex: One-to-One Mapping - Is a traditional ingestion model where each data source or topic is ingested separately into bronze table.Patterns works well for batch processing, 
+-Multiplex: Many-to-One Mapping - however if you have streaming processing of large datasets, if you have many streaming jobs , one per topic, you will hit maximun limit of concurrent jobs in your workspace.
+ex - kafka -> table, in this table records are organized into topics along with the value columns that contaibs the actual data in JOSN format.
+
+
+files = dbutils.fs.ls(f"{dataset_bookstore}/kafka-raw")
+display(files)
+df_raw = spark.read.json(f"{dataset_bookstore}/kafka-raw")
+display(df_raw)
+
+Incremental Loading into bronze
+================================
+from pyspark.sql import function as F
+def process_bronze():
+	schema = "key Binary, value Binary, topic String, partition LONG, offset LONG, timestamp LONG"
+	query = (spark.readStream
+				.format("cloudFiles")
+				.option("cloudFiles.Format", "json")
+				.schema(schema)
+				.load(f{dataset_bookstore}/kafka-raw")
+				.withColumn("timestamp", (F.col("timesatmp")/100).cast("timestamp"))\
+				.withColumn("year_month", (F.date_format("timestamp", "yyyy-MM"))
+				.writeStream
+				.option("checkpointlocation", "dbfs:/mnt/demo_pro/checkpoint/bronze")
+				.option("mergeSchema", True)
+				.partitionBy("topic", "year_month")
+				.trigger(availableNow=True)
+				.table("bronze")))
+	query.awaitTermination()
+
+#option("mergeSchema", True) -> To leverage schema evolution functionality of Autoloader, This will automatically evolve he schema of the table when new fields are detected in the input JSON.
+#trigger(availableNow=True) -> Our query execute in batch mode, it process all the data and then stoppped on its own. 
+#If you are ingesting large files that cause long micro-batch processing time or memory issues you can use "cloudFiles.maxBytesPer.Trigger" option to control the maximum amount of data processes in each micro batch. This improves stability and keeps batch durations more predictable.
+#badRecordspath - option to capture and isolate invalid records ina  separate location for the further review.
+#File filters - to filter specific files based on specific pattern , such as *.png, .option("pathGlobFilter", "*.png")
+#Schema Evolution - Auto loader detects the addition of new columns in the input files during processing. To control how this schema change is handles, you can set the "cloudFiles.schemaEvolutionMode"
+	addNewColumns - Stream fails, new columns are added to the schema.
+	rescue - Schema is never evolved and stream does not fail dure to schema changes. All new columns are recorded in the rescued data column.
+	failOnNewColumns - Stream fails, Stream does not restart unless the provided schema is updated, or the offending data file is removed.
+	none - Does not evolve the schema, new columns are ignored, and the data is not rescued. Stream does not fail due to schema changes.
+	Default mode is "addNewColumns", so when Autroloader detects the new column, the stream stops with an UnknownFieldException.Before your stream throws the error, Autoloader updates the schema location with the latest schema by merging new columns to the end of the schema. The next run of the stream executed successfully with the updated schema.
+	Note that addNewColumns mode is the default when schema is provided, but none is default when you provide a schema.
+process_bronze()
+
+
+batch_df = spark.table("bronze")
+%sql 
+select * from bronze 
+
+select v.* FROM(
+	Select from_json(cast(value as STRING), "order id STRING, order_timestamp Timestamp, customer_id STRING, quantity BIGINT, total BIGINT, books ARRAY<STRUCT<book_id STRING, quantity BIGINT, subtotal BIGINT>>") v
+	FROM bronze
+	WHERE topic = 'orders'
+)
+
+<!-- #Converting our static table into a streaming temporary view -->
+(spark.readStream
+	.table("bronze")
+	.createOrReplaceTempView("bronze_tmp"))
+
+<!-- We can update our above query to refer to this streaming temporary view -->
+select v.* FROM(
+	Select from_json(cast(value as STRING), "order id STRING, order_timestamp Timestamp, customer_id STRING, quantity BIGINT, total BIGINT, books ARRAY<STRUCT<book_id STRING, quantity BIGINT, subtotal BIGINT>>") v
+	FROM bronze_tmp
+	WHERE topic = 'orders'
+)
+<!-- Such a always-on stream prevents the cluster from auto terminationg -->
+let us define this logic in a temporary view to pass it back to python, remember we can switch from SQL to Python using a temporary view.This temporary view used as intermediary to capture the query we want to apply.
+CREATE OR REPLACE TEMPORARY VIEW orers_sliver_tmp AS 
+select v.* FROM(
+	Select from_json(cast(value as STRING), "order id STRING, order_timestamp Timestamp, customer_id STRING, quantity BIGINT, total BIGINT, books ARRAY<STRUCT<book_id STRING, quantity BIGINT, subtotal BIGINT>>") v
+	FROM bronze_tmp
+	WHERE topic = 'orders'
+)
+
+query = (spark.table('orders_silver_tmp')
+		.writeStream
+		.option("checkpointLocation", <location>)
+		.trigger(availableNow=True)   #So all the records will be processes in multiple microbatches until no data is available and then stop the stream.
+		.table("orders_silver))
+query.awaitTermination()
+
+<!-- using Python API -->
+from pysark.sql import functions as F
+json_schema = "order_id STRING, order_timestamp Timestamp, customer_id STRING, quantity BIGINT, total BIGINT, books ARRAY<book_id STRING, quantity BIGINT, subtotal BIGINT>>"
+query = (spark.readStream.table("bronze")
+			.filter("topic = 'orders'")
+			.select(F.from_json(F.col("value").cast("string"), json_schema).alias("v))
+			.select("v.*)
+		.writeStream
+			.option("checkpointLocation", "<loc>")
+			.trigger(availableNow=True)
+			.table("orders_silver"))
+query.awaitTermination()
+
+select * from orders_silver;
+
+Quality Enforcement
+====================
+Tble constraints apply boolean filters to columns, and prevent data violating these constraints from being written.
+applying on exsisting tables
+
+ALTER TABLE orders_silver ADD CONSTRAINT timestamp_within_range CHECK (order_timestamp >= '2020-01-01')
+it validates the existing rows aswell..and add to properties only upon validataion.
+Table constraints are listed under the properties of the extended table description - DESCRIBE EXTENDED orders_silver.
+Note that ACID guarantees on Delta lake ensure that all teh transactions are atomic, ie They aill either succeed or fail completely. so if the constraint fails none of these records have been inserted including the ones that dont violate the constraints.
+
+<!-- If our goal is to exclude bad records but keep streaming jobs running, we will need a different solution. -->
+for the above you can add that while creating a table.
+
+To remove CONSTRAINT -> ALTER TABLE orders_silver ADD CONSTRAINT timestamp_within_range;
+
+<!-- Streaming Duplicates eliminate while working with structured streaming -->
