@@ -1689,6 +1689,7 @@ def batch_upsert(microBatchDF, batchId):
 
 CREATE TABLE IF NOT EXISTS customers_order
 ()
+STREAM-STREAM join
 # Streaming query to write our new table customers_orders
 def process_customers_orders():
 	orders_df = spark.readStream.table("orders_silver)
@@ -1705,3 +1706,61 @@ def process_customers_orders():
 					.start())
 	query.awaitTermination()
 process_customers_orders()
+
+Stream-static Join - Join incremental and static Data -> resultant table is an incremental table.
+Potential limitations
+-Streaming tables are ever-appending data sources
+-Static tables contain data that may be changed or overwritten.
+	-breaks the requirement of an ever-appending source for structured streaming.
+This pattern will take advantage of Delta Lake's guarantee that the latest version of the static Delta table is returned each time it is queried.
+in stream staic join, the streaming portion of the join drives the join process.Only new data appearing on the streaming side of the join will trigger the processing.While adding new records into the static table, will not automatically trigger updates to the results.Even though the new records in static table it does not effect and missed from the resulting table when not present during the streaming.
+Question - can we buffer these unmatchedrecords as a streaming state to be matched later? - No, Streaming static joins are not stateful.Meaning that we cannot configure our query to wait for new records to appear in the static side prior to calculating the results.
+So when leveraging streaming static joins, make sure to be aware of these limitations for unmatched records.
+For this you can configure a separate batch job to find and and insert missed records.
+
+from pyspark.sql.functions import *
+
+def process_books_sales():
+	orders_df = (spark.readStream.table("orders_silver")
+					  .withColumn("book", explode("books")))
+	books_df = spark.read.table("current_books")
+	query = (orders_df
+					.join(books_df, orders_df.book.book_id == books_df.book_id, "inner")
+					.writeStream
+						.outputMode("append")
+						.option("checkpointLocation", "<loc>")
+						.trigger(availableNow=True)
+						.table("books_sales"))
+
+	query.awaitTermination()
+process_books_sales()
+
+Materialized Gold Tables
+========================
+CREATE VIEW IF NOT EXISTS countries_stats_vw AS (
+	SELECT country, date_trunc("DD", order_timestamp) order_date, count(order_id) orders_count, sum(quantity) books_count
+	FROM customers_orders
+	GROUP BY country, date_trunc("DD", order_timestamp)
+)
+View - A sql query against tables, so if you have a complex query with joins and subqueries, each time you query the view, Delta have to scan and join files from multiple tables, which would be a really costly.
+Initial run it will take time then for the second execution it will be super faster.Infact t save costs Databricks uses a feature called Delta Caching.So subsequent execution of queries will use cached results.
+However these cached result is not guaranteed to be persisted and is only cached for currently active cluster.
+In traditional databases, usally you can control cost associated with materializing results using materialized views. In Databricks, the concept of the materialized view most closely maps to that of a gold table.
+Gold tables help to cut down the potential cost and latency associated with complex ad-hoc queries.
+
+from pyspark.sql.functions import *
+query = (spark.readStream
+			  .table("books_sales")
+			  .withWatermark("order_timestamp", "10 minutes")
+			  .groupBY(
+				window("order_timestamp", "5 minutes").alias("time"), "author"
+			  )
+			  .agg(
+				count("order_id").alias("order_count"),
+				avg("quantity").alias("avg_quantity")
+			  )
+			  .writeStream
+			  	.option("checkpointLocation", f"<loc>")
+				.trigger(availableNow=True)
+				.table("authors_stats"))
+query_awaitTermination()
