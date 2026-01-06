@@ -1764,3 +1764,33 @@ query = (spark.readStream
 				.trigger(availableNow=True)
 				.table("authors_stats"))
 query_awaitTermination()
+
+Partitioning Delta Lake
+========================
+Partition is a subset of rows that share the same value for predefined partitioning columns.
+CREATE TABLE <table> (id INT, name STRING, year INT, month INT)
+PARTITIONED BY (year, month)
+
+choosing partition columns
+-Total values present in a column - low cardinality fields should be used for partitioning.
+-Total records share a given value for a columns - Partitiones should be at least 1 GB in size.
+-Records with a given value will continue to arrive indefinitely - Datetime fields can be used for partitioning.
+
+Avoid Over-partitioning
+-Files cannot be combined or compacted across partition boundaries - Partitioned small tables increase storage costs and tota number of files to scan.
+-If most prtitiones <1GB of data, the table is over-partitioned.
+-Data that is over-partitioned or incorrectly partitioned will suffer greatly 
+	- lead to slowdowns for most general queries.
+	- Require a full rewrite of all data files to remedy.
+
+DELETE FROM <table> WHERE year < 2024>
+Note - if you are using the table as a streaming source, remember that deleting data breaks the append-only requirement of the streaming sources, which makes the table no more streamable.
+To avoid this, you need to use the ignoreDeletes otpion when streaming from a table.
+spark.readStream
+	.option("ignoreDeletes", True)
+	.table("my_table")
+This option enables the streaming processing from Delta tables with partition deletes.
+tHE DEletion of files will not actually occur until you run VACCUM command on the table.
+Now
+
+
