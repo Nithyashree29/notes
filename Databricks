@@ -1793,4 +1793,100 @@ This option enables the streaming processing from Delta tables with partition de
 tHE DEletion of files will not actually occur until you run VACCUM command on the table.
 Now
 
+Optimizing Data File Layout
+============================
+Data file layout
+	-The organization and storagee structure of the underlying data files that makes up a Delta table.
+	-Optimizing layout helps leveraging data-skipping algorithms.
+	-optimization techniques:
+		-Partitioning
+		-Z-Order Indexing
+		-Liquid Clustering.
 
+Partitioning Limitations
+-Prevents file compression across partition boundaries, results in small file problem.
+OPTIMIZE commands will only be applied at the partition level to compact data files, which leave us with a small file problem in the table.
+Inefficient for high-cardinality columns - results in small files problem.
+Static - Re-partitioning requires a full table rewrite.Which can be a costly operation in terms of both time and resources.
+
+Z-order indexing
+-group similar data into optimized files without creating directories
+OPTIMIZE <table> ZORDER BY column_name
+-Leverage data-skipping algorithms.
+-Effective for high-cardinality columns.
+Z-ordering in Delta Lake is about co-locating and reorganizing column information in the same set of files.
+Z-order indexing is used by data skipping algorithm to extremmely reduce the amount of data that need to be read.
+Main issue with Z-ordering is that it is not an incremental operation.When a new data is ingested, you must rerun the OPTIMIZE command to recognize the data.Rerunning this ommand may result in the recreation of all files in teh entire table, which can be computationally intensive.
+Instead we can use
+LIQUID CLUSTERING
+Improved version of Z-order indexing with more flexibility and better performance.
+Like partitioning, liquid clustering is defined at the table level by specifying yur clustering keys.
+New table
+-CREATE TABLE table(col1 INT, col2 STRING, col3 DATE)
+CLUSTER BY (col1, col3)
+Existing tables
+ALTER TABLE table2
+CLUSTER BY (<clus_cols>)
+
+Note - clustering is not compatible with partitioning or Z-order, To trigger clustering simply use the OPTIMIZE command on your table. This is an incremental operation. On a new data ingestion, it is smart enough to know that old data is already well clustered.So on the next run of the OPTIMIZE command, only unoptimized files affected. while files already optimized are simply ignored- hence quicka nd efficient.
+-Flexible to redefine clustering keys without rewriting existing data.
+-Choose clustering keys based on your query pattern.
+
+Automatic Liquid Clustering
+- databricks automatically chooses clustering keys by analyzing the table historical query workload.
+-Requires Predictive Optimization on Unity Catalog managed tables.
+Syntax
+-CREATE TABLE table(col1 INT, col2 STRING, col3 DATE)
+CLUSTER BY AUTO
+-ALTER TABLE table CLUSTER BY AUTO
+
+Predictive Optimization - is an AI-driven feature that automatically handles maintenance operations for unity catalog managed tables, eliminating the need for manual tuning, improving query performance, and reducing storage costs.
+Predictive optimization runs the ollowing operations automatically for enables tables:
+optimize, vacuum, ANAlyze - to triggers incremental update of table statistics, These statistics are used by query optimizer to generate an optimal query plan.
+Optimize does not run ZORDER when executed with predictive optimization.
+
+Delta lake transaction logs
+-Each commit to the table is written out as a JSON file.
+The JSON file contains the list of actions performed like adding or removing files from the table.
+Spark needs to process many tiny, inefficient JSON files in order to resolve the current table state.To avoid this issue Databricks automatically creats parquet heckpoint files every 10 commits to accelerate the resolution of the current table state.
+Then, spark only has to perform incremental processing of newly added JSON files.
+Delta lake captures statistics in the transaction log for each added data file.
+The statistics indicate
+-Total number of file
+-Statistics on the 32 columns of the table
+	-Minimum value in each column
+	-Maximum value in each column
+	-Null value counts for each of the columns.
+-Statistics will always be leveraged for file skipping
+-Statistics are uninformative for string fields with high cardinality
+	-free text fields -  time consuming move them outside the first 32 columns.
+
+Running the VACCUM command does not delete Delta log files
+Log files are automatically cleaned up by Databricks.Each time a checkpoint is written, Databricks automatically cleans up log entriesolder than the log retention interval (default: 30 days)
+
+Auto Optimize 
+=============
+Delta lake can automatically compact small files during individual writes to a table.
+2 complementaory features
+-Optimized writes to write 128 MB files.
+-Auto compaction
+	After the write completes, it checks if files can further be compacted.
+	If yes, it runs an OPTIMIZE job toward a file size of 128 MB (instead of 1GB used in the standard OPTIMIZE)
+Auto compaction doesnot support Z-ordering, as Z-ordering is more significantly more expensive than just compaction.
+
+CREATE TABLE <table> (id INT, name STRING)
+TBLPROPERTIES (delta.autoOptimize.optimizeWrite = true,
+			   delta.autoOptimize.autoCompact = true)
+ALTER TABLE <table>
+SET TBLPROPERTIES (delta.autoOptimize.optimizeWrite = true,
+			   delta.autoOptimize.autoCompact = true)
+			
+Sark Sessions
+these session configurations take precedence over the table properties allowing you to better control when .
+spark.databricks.delta.optimizeWrite.emnabled
+spark.databricks.delta.autoCompact.enabled
+
+Having many small files is not always a problem
+-it can lead to better data skipping, and help minimize rewrite during merges and deletes.
+Databricks can automatically tune the file size of Delta tables, based on workloads operating on the table.
+-For frequnt MERGE operations, Optimized Writes snd Auto Compactions will generate data files smaller than 128 MB, This helps in reducing the duration of future MERGE operations.
