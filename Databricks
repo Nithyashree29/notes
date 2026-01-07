@@ -1321,7 +1321,8 @@ The DESCRIBE DATABASE or DESCRIBE SCHEMA returns the metadata of an existing sch
 
 In Spark Structured Streaming, we use trigger(availableNow=True) to run the stream in batch mode where it processes all available data in multiple micro-batches. The trigger will stop on its own once it finishes processing the available data.
 
-
+Professional
+=============
 Lakehouse platform -
 Workspace - Data engineering, Data warehouse, Machine learning.
 Runtime - Spark, delta lake
@@ -1890,3 +1891,62 @@ Having many small files is not always a problem
 -it can lead to better data skipping, and help minimize rewrite during merges and deletes.
 Databricks can automatically tune the file size of Delta tables, based on workloads operating on the table.
 -For frequnt MERGE operations, Optimized Writes snd Auto Compactions will generate data files smaller than 128 MB, This helps in reducing the duration of future MERGE operations.
+
+Deletion Vectors -  Deletion vectors are a storage optimization feature you can enable on Deltalake tables, By default, when a single row in a data file is updated or deleted, the entire Parquet file containing the record must be rewritten. With deletion vectors enabled for the table, DELETE, UPDATE, MERGE operations create small file called deletion vectors to mark existing rows as removed or changed without rewriting the parquet file. Subsequent reads on the table resolve the current table state by applying the deletiuons indicated by deletion vectors to the most recent version.
+
+Deleetion ver=ctors indicate changes to rows as soft-eleted that logically modify existing Parquet data files in The Delta files in the Delta lake table.
+These changes are applied physically when one of the following events causes the data files to be rewritten:
+	AnOPTIMIZE command is run on the table.
+	Auto Optimize triggers a rewrite of data file with a deletion vecto.
+delta.enabledDeletionVectors
+Note - Deletion vectors are enabled be default when you create a new table using a SQL warehouse or Databricks Runtime 14.1 or above.
+
+Python UDF
+==========
+python udf's are not usable for sql, to register you can use and it creats both sql and py udf as below
+apply_discount_py_udf = spark.udf.register("<UDFsql FUNCTION>", <udfname>)
+
+==========================================================================================================
+GIt folders - 
+Version history , we can just move to the versions and can be deleted easily and no branches or anything can be created.
+Git folders provide source control for your data projects by integrating them with Git providers like GitHub.
+
+Delta Lake
+==========
+Open source atorage framework that brings reliability to data lakes.
+Delta lake is /isnot
+-Open source technology // not proprietary technology.
+-Storage framework/layer // storage format/medium
+-Enabling building lakehouse // Data warehouse/Database service
+Transaction Log - Known as Delta log, is ordered records of every transaction.
+Single source of truth.
+JSON file contains commit information
+	-Operation performed + Predicated used
+	-data files affected (added/removed)
+Ex - we have writer process and reader process
+Once the writer process starts, it stores the Delta Lake table in two data files in a parquet format.
+As soon as the write process finishes writing, it adds the transaction log 000.json into the _delta_log directory.
+A reader process always starts by reading a transaction log.
+IN SECOND run, the writer process wants to update a record presents in the file number , But in Delta lake instead of updating the record in the file itself, it will make a copy of this file and make the necessary updates in that new file (file 3) It then updates the log by writing a new JOSN file. This new log file knows that file number 1 is no longer needed.
+Hence it guarantees that you will get the most recent version of the data. Your read operation will never have a deadlock state or conflicts with any ongoing operation on the table.
+
+Delta Lake Advantages
+=====================
+-Brings ACID transactions to object storage.
+-Handle scalable metadata.
+-Full audit trail of all changes.
+-Builds upon standard data formats: Parquet + Json.
+
+Lets explore with traditinal hive metastore or later to Unity Catalog
+USE CATALOG hive_metastore;
+CREATE TABLE employees
+(id INT, name STRING, salary DOUBLE USING DLETA)
+Note - based on number of insert numbers of parquet files will be generated.
+To explore table metadata - DESCRIBE DETAIL <table>
+UPDATE <table> SET salary =  salary + 100 where name like 'Ni'
+
+
+
+
+
+
