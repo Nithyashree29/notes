@@ -2052,6 +2052,58 @@ Types of views
 2. Temporary vIEWS - Session scoped view, CREATE TEMP VIEW view_name AS QUERY, dropped when session ends
 3. Global temporary views - cluster-scoped view, CREATE GLOBAL TEMP VIEW view_name AS QUERY, dropped when cluster restarted.
 
+Querying Files
+===============
+Quering data files directly - Select * from file_format.'<path>'
+Extract files as raw contents
+Configure options of external sources
+	CREATE TABLE table_name (col1 col_type...) USING data_source(file type) OPTIONS (key1 = val1,....) LOCATION = PATH
+	EXTERNAL TABLE
+	During quering also it might just give you the cached data in case of external table and not teh latest data like delta.You have to use EFRESH TABLE table_name
+	Non-delta table - in its original format
+	We cannot expect the performance guarantees associated with Delta Lake and lakehouse.
+	Solution - create temporary view on that datasorce location and create table on top of that.
+Use CTAS statements to create Delta lake tables. - CREATE TABLE table_name AS SELECT * FROM file_format.`<path>`
+	Do not support manual schema declaration.
+	Useful for external data ingestion with well-defined schema.
+	Do not upport file options.
+
+Databricks recently introduced new function read_files that makes it easier to query CSV files and other file formats directly needing to first crearte a temporary view.
+SELECT * FROM read_files(
+	'${dataset_bookmarks}/books-csv/export_*.csv,
+	format => 'csv',
+	header => 'true',
+	delimiter => ';'
+);
+The read_files funtion automatically tries to infer a united schema from all the sources files. if any value doesn't match teh expected schems, It's stored in an extra column called _rescued_data as a JSON string.
+
+_metadata Column - replacement for input_file_name() function, B leveraging the _metadata, column, you can ccess various details about your input file.
+
+wRITING TO TABLES
+CREATE TABLE orders AS
+SELECT * FROM parquet.`<path>`
+
+CRAS statement for overwriting  - Overwriting a table is much faster because it does not need to list the directory recursively or delete any files , It an atomic operation.
+CREATE OR REPLACE TABLE orders AS
+SELECT * FROM parquet.`<path>`
+
+2nd method to overwrite data is - INSERT OVERWRITE, limitation it can only overwrite table and not creating a new one like our CREATE OR REPLACE, and it strictly follwos the schema on-write 
+INSERT OVERWRITE orders
+SELECT * FROM parquet.`<path>`
+
+3rd appending records to table - Insert into statement is a simple and efficient operation for inserting new data.However, it does not have any built in guarantees to prevent inserting the same records multiple times upon execution of inset query.
+INSERT INTO ORDERS
+SELECT * FROM parquet.`<path>`
+
+To solve that we have MERGE INTO  - You can merge statement, you can upsert data from a source table, view, or dataframe into the target data table.(INSERT, UPDATE, DELETE)
+CREATE OR REPLACE TEMP VIEW cust_updates AS
+SELECT * FROM json.`<path>`
+MERGE INTO cust c
+USING cust_updates u
+ON c.cus_id = u.cust_updates_id
+WHEN MATCHED AND c.email IS NULL AND u.email IS NOT NULL THEN
+	UPDATE SET email = u.email, updated = u.updated
+WHEN NOT MATCHED THEN INSERT *
 
 
 
