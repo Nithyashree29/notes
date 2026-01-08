@@ -1943,9 +1943,123 @@ CREATE TABLE employees
 (id INT, name STRING, salary DOUBLE USING DLETA)
 Note - based on number of insert numbers of parquet files will be generated.
 To explore table metadata - DESCRIBE DETAIL <table>
-UPDATE <table> SET salary =  salary + 100 where name like 'Ni'
+UPDATE <table> SET salary =  salary + 100 where name like 'Ni%'
+
+Note - Parquet files are immutable hence  creats new files for each update.
+DESCRIBE HISTORY employees
+
+Advanced Delta Lake Features
+============================
+-Time travel
+	Audit data changes, DESCRIBE HISTORY command
+	Query older versions, Using timestamp (SELECT * from table TIMESTAMP AS OF '2026-01-04') or SELECT * FROM table VERSION AS OF 36
+	SELECT * FROM table@v36
+	Rollback Versions, RESTORE TABLE table TO TIMESTAMP AS OF '2026-01-04', RESTORE TABLE table TO VERSION AS OF 36.
+-Compacting small files and Indexing
+	OPTIMIZE table
+	OPTIMIZE table 
+	ZORDER BY column name
+-Vacuum
+	Cleaning up nused data files, VACUUM table <retention period> (default retention period is 7 days)
+	Note - Vacumm = no time travel
 
 
+Spot Instances - ARe a cost effective option provided by cloud providers (such as AWS, Azure, GCP) that allows users to take advantage of unused to take advantage of unused compute capacity at a reduced price - often up to 90% less than on-demand instances. In Databricks, configuring clusters to use spot instances can substantially reduce operational expenses for workloads that are tolerant of potentia; interruptions.
+However, while they are significant cost savings, spot instances are not well-suited for time-sensitive or mission-critical workloads due to risk of unexpected termination by the cloud provider.
+
+Databricks Asset Bundles use a structured YAML configuration file named databricks.yml as the primary entry point. This file defines key aspects of the bundle such as 
+	Targets - Define different environments (dev, staging, prod)
+	Resources - Define objects like jobs, botebooks, pipelines, clusters.
+	Configurations - Include settings such as workspace paths, environment variables and parameter values.
+
+The format is designed to be declarative and human-readable, facilitating clear version control and automation within CI/CD workflows. Unlike JSON or TOML, YAML is preferred for its readability ans native suport for nested structures, making it idel for complex infrastructure and deployment definitions.
+
+Databricks-to-Dataricks Delta Sharing data security with any databricks client, regardless of acciunt or cloud host, as long as that the client has access to workspace enabled for Unity catalog.
+
+Continous pipelines update tables continously as input data chnages. once an uodate is started, it continues to run until the pipeline is shut down.
+in PRODUCTION MODE ,THE DELTA live tables system:
+	Terminates the cluster immediately wehn the pipeline is stopped.
+	Restarts the cluster for recoverable errors (ed- emory leak, stale credentials)
+	Retrie execution in case of specific errors 
+
+The MODIFY privilage grants a user the ability to add, update or delete data from an object. It is typically assigned to uses who need to ae changes to existing records or insert new informationinto the object
+
+Data File Layout
+=================
+Th organizaton and storage structure of the underlying data files that make up a Delta Table.
+Optimizing layout helps leveraging data-skipping algorithms.
+Optimization techniques
+	Partitioning : 
+		Limitations
+			1. Prevents file compaction across partition boundaries.Results in small file problem.
+			2. Inefficient for high-cardinality colums. results in small files problem
+			3. Static : Repartitioning requires a full table rewrite.
+	Z-order Indexing
+		Limitations
+			1. Group similar data into optimized files without creating directories.
+			2. Leverage data-skipping algorithms.
+			3. Effetive for High-Cardinality columns
+	Liquid Clustering
+		Flexible to redefine clustering keys without rewriting existing data.
+		Choose clustering keys based on your query pattern.
+
+Relational Entities
+	databases = Schemas in Hive metastore(Repository for metadata, ex- database tables...).
+		CREATE DATABASE/SCHEMA db_name
+	tables
+		Manages Tables - Created under the database directory, CREATE TABLE table_name.
+		DRopping the table, delete teh underlying data files.
+		External Tables - created outside teh database directory, create table table_name LOCATION 'path'
+	The impact of location Keyword
+CTAS - Create tables using select statement
+CREATE TABLE table AS SELECT FROM table2
+Automatically infer schema information from query results, do not support manual schema declaration.
+Adiitional Options
+==================
+CREATE TABLE newtable
+COMMENT "condition PII"
+PARTITIONED BY (city, bd)
+LOCATION 'ext_loc'
+AS SELECT * FROM USERS
+
+Create Table               vs                           CTAS
+CREATE table table1(col1 INT, col2 STRING)              CREATE TABLE table1 AS select * from table2
+Manual schema declaration.								Do not support manual schema declaration,
+														automatically infer schema
+Create empty table, need  INSERT INTO                   Table created with data.
+
+Table Constraints
+=================
+1.NOT NULL constraints
+2.CHECK constraints
+Alter table table_name ADD CONSTRAINT constraint_name constraint_details.
+ALTER TABLE orders ADD CONSTRAINT valid_date CHECK (date > '2026-01-04')
+
+Clone Delta tables
+1. DEEP clone - Fully copies data + metadata from a source table to a target
+	CREATE TABLE tablename DEEP CLONE sourcetable
+	Can sync changes
+	Take quite a while for large datasets.
+2. SHALLOW clone - Quickly create a copy of a table
+	Just copy the delta transaction logs
+	CREATE TABLE table SHALLOW CLONE sourcetable.
+Useful to setup tables for testing in development.
+In either case, data modifications will not affect the source.
+
+VIews -  Virtual table, logical query against source tables.
+Types of views
+1. (Stored) views - Persisted objects in db's, CREATE VIEW view_name AS query, dropped only by DROP VIEW
+2. Temporary vIEWS - Session scoped view, CREATE TEMP VIEW view_name AS QUERY, dropped when session ends
+3. Global temporary views - cluster-scoped view, CREATE GLOBAL TEMP VIEW view_name AS QUERY, dropped when cluster restarted.
+
+
+
+
+
+
+
+
+ 
 
 
 
