@@ -2104,15 +2104,154 @@ ON c.cus_id = u.cust_updates_id
 WHEN MATCHED AND c.email IS NULL AND u.email IS NOT NULL THEN
 	UPDATE SET email = u.email, updated = u.updated
 WHEN NOT MATCHED THEN INSERT *
+Merge operation is a great solution for avoiding duplicates when inserting records.
+
+Advanced Transformations
+========================
+Spark SQL also has the abilit to parse JSON objects into struct types, Struct is a native spark type with nested attributes.Using from_json function.
+CREATE OR REPLACE TEMP VIEW parsed_custoners AS
+	SELECT cust_id, from_json(profile, schema_of_json('{"first_name" :"Thomas", "ln":"lane", "gender":"male", "address":{"street":"22", "country":"london"}}'))
+	FROM customers;
+with struct type, we can interact with the subfields using standard period or dot syntax instead.
+
+CREATE OR REPLACE TEMP VIEW customers_final AS
+	SELECT cust_id, profile_struct.*
+	FROM parsed_customers
+SELECT order_id, cus_id, explode(books) as book from orders
+Collect_set -> Aggregation function that allows us to collect unique values for a field, including fields within arrays.
+	SELECT cus_id,
+		collect_set(order_id) AS orders_set,
+		collect_set(books.book_id) AS boks_set
+		<!-- array_distinct(flatten(collect_set(books.books_id)))  --> for unique 
+	FROM orders
+	GROUP BY cust_id
+
+Joins
+======
+Inner, outer, anti etc...minos, pivot
+Intersect - Returns all rows found in both relations.
 
 
+Higher order functions
+=======================
+Filter - SELECT order_id, books, FILTER(books, i -> i.quantity >= 2) as ss FROM orders
+Transform - use to apply transformation on all the items in an array and extract the transformed value
+SELECT order_id, books, TRANSFORM (
+	books,
+	b -> CAST(b.subtotal * 0.8 AS INT)
+) AS subtotal
+FROM orders;
+
+UDF -> Funtions leverage spark SQL directly maintaining all the optimizations of spark when applying your custom logic to large datasets.
+CREATE OR REPLACE FUNCTION get_url(email string)
+RETURNS STRING
+RETURN conact("https://ww.", split(email, "@")[1])
+
+DESCRIBE FUNCTION get_url -> With DESCRIBE function command, we can see where it was registered and basic information about expected input and expected return type.
+DESCRIBE FUNCTION EXTENDED GET_URL
+
+CREATE FUNCTION site_type (email STRING)
+RETURNS STRING
+RETURN CASE
+		WHEN ..
+		else
+	END
+
+Note - everything is evaluated natively in spark. And so it is optimized for parallel execution.
+
+Structured Streaming
+====================
+streamDF = spark.readStream
+				.table("Input_Table")
+streamDF.writeStream
+		.trigger(processingTime="2 minutes")
+		.outputMode("append")
+		.option("checkpointLocation", "<path>")
+		.table("Output Table")
+
+Trigger Intervals
+=================
+Unspecified - DefauitprocessingTime="500ms"
+FixedInterval - trigger(processingTime="5 minutes"), Process data in micro-batches at the user-specified intervals.
+Triggered batch - trigger(once=True), process all available data in a single batch, then stop.
+Triggered micro-batch - trigger(availableNow=True), Process all available data in multiple micro-batches, then stop. Triggered incremental batch. (That is why we use the awaitTermination() to block the execution of any cell in the notebook until the incremental batch's write has succeeded)
+streamDF.writeStream
+		.trigger(availableNow=True)
+		.outputMode("append")
+		.option("checkpointLocation", "<path>")
+		.table("Output Table")
+		.awaitTermination()
 
 
+Output Modes
+=============
+Append - Only new appended rows are incrementally appended to the target table with each batch.
+Complete - The target table is overwritten with each batch.
 
+Checkpointing
+==============
+Store strean state.
+Track the progress of your stream processing.
 
+Guarantees
+==========
+Fault Tolerance - Checkpointing + write-ahead logs, record the offset range of data being processed during each trigger interval.
+Exactly-once guarantee - Idempotent sinks.That is multiple writes of the same data, of course identified by the offset, do not result in duplicatess.
+Note - Two guarantees here only works if the streaming source is repeatable, like cloud based object storage or pub/sub messaging service.So taking together repeatable data sources and idempotent sinks allows spark structured streaming to ensure end-to-end exactly once semantics under any failure condition.
 
+Unsupported Operations
+======================
+Some operations are not supported by streaming Dataframe
+1.Sorting
+2.Deduplication.
+ use can use adavnced methods like below
+Advanced methods
+1.Windowing
+2.Watermarking
  
+*If the view is created from a streaming tem view, it will also be a streaming view.
+In pyspark API e can use the spark.table() to load data from streaming temporary view back to a dataFrame.
+Note that spark always loads streaming views as a streaming Dataframes and static views as a static dataframes, meaning that incremental processing must be defined from the very beginning with read logic to support an incremental writing.
+(spark.table("<streamingtable>")
+		.writeStream
+		.trigger(processingTime='4 seconds')
+		.outputMode("complete")
+		.option("checkpointLocation", "<path>")
+		.table("author_counts"))
 
+Note - For aggregation streaming queries, we must always use "complete" mode to overwrite the table with the new calculation.
 
+Incremental data ingestion with files
+======================================
+Loading new data files encountered since the last ingestion.
+Reduces redundant processing.
+2 Mechanisms:
+COPY INTO -
+	SQL Command
+	Idempotently and incrementally load data files
+	Less efificient at scale
+	Command:
+		COPY INTO table
+		FROM '<path>'
+		FILEFORMAT = <format>
+		FORMAT_OPTIONS (<format options>)
+		COPY_OPTIONS (<copy options>);
+Auto Loader -
+	Structure Streaming
+	Can process billions of files
+	Support near real-time ingestion of millions of files per hour.
+	Store metadata of the discovered files.
+	Exactly-once guarantees
+	Fault tolerance
+	Efficient at scale.
+	Command:
+		spark.readStream
+			 .format("cloudFiles")
+			 .option("cloudFiles.format", <source_format>)
+			 .option("cloudFiles.schemaLocation", <checkpoint_directory>)
+			 .load('<path>')
+			.writeStream
+				.option("checkpointLocation", <checkpoint_directory>)
+				.table(<table_name>)
 
 
