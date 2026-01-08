@@ -2254,4 +2254,28 @@ Auto Loader -
 				.option("checkpointLocation", <checkpoint_directory>)
 				.table(<table_name>)
 
+Auto loader options
+===================
+Filters input files base on specifix patter, you can use the "pathGlobFilter"
+Autoloader detects the addition of new columns in input files during procesiing. To control how schema changes is handled, you can set "cloudFiles.schemaEvolutionMode
+Supported schema evolution modes include
+-addnewColumns(default) - stream fails, new columns are added to the schema
+-recue - Schema is never evolved and stream does not fail due to schema changes . All new columns are recorded in the rescued data column.
+failOnNewColumns - Stream fails, stream does not restart unless the provided schema is updated or the offending data file is removed.
+none - Does not evolve the schema new columns are ignored and data is not rescued. Stream does not fail due to schema changes.
+
+MultiHop Architecture
+=====================
+incremental Multi-Hop pipeline.
+Describe Bronze, Silver, and Gold tables.
+Medallion Architecture
+Organize data in Multi-layered approach
+Incrementally improving teh structure and quality of data as it flows through each layer.
+
+Benefits
+========
+-Simple data model
+-Enables incremental ETL
+-Combine streaming and batch workloads in unified pipeline
+-Can recreate your tables from raw data at any time.
 
