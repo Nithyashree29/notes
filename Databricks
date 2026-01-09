@@ -2334,3 +2334,77 @@ Pipline is created -> Select Development/Production
 
 Production Mode - This mode allows the interactive development by reusing the cluster, compared to creating new cluster for each run in the production mode.
 Development Mode -  The development mode also disables retries so that we can quickly identify and fix errors.
+
+Change Data Capture
+===================
+Process of identifying changes made to data in the source and delivering those changes to the target.
+Row level changes - Inserting new records, Updating existing records, Deleting existing records.
+Row data + metadata
+
+DLT supports CDC using CDC -  Apply changes into command
+==========================
+APPLY CHANGES INTO LIVE.target_table
+FROM STREAM(LIVE.cdc_feed_table)
+KEYS(key_filed)
+APPLY AS DELETE WHEN operation_filed = "DELETE"
+SEQUENCE BY sequence_filed
+COLUMNS *
+
+APPLY CHANGES INTO: Pros
+=========================
+1.Orders late-arriving records using the sequence key. This ensures that if any records arrive out of order, down stream result can be properly re-computed to reflect the updates.
+2. It also enures that when records are deleted from a source table, these values are no longer reflected.
+3.Default assumption is that rows will contain inserts and updates.
+4.Can optionally apply deletes (APPLY as delete when condition)
+5.Specify one or many fields as the primary key for a table.
+6.Specify columns to ignore with the EXCEPT keyword.
+7.Supportapplying changes as SCD type 1(default) or SCD type 2
+
+Cons - Since data is being updated and deleted in the target table.
+Breaks the append-only requirements for streaming table sources - can not perform streaming queries against the table. that means we will no longer be able to use this updated table as streaming sources later in the next layer.
+
+ss
+For the source ou will be having additional columns which indicate the row_status and the row_time - so that cdc can be applied.
+
+CDC Example
+============
+BRONZE
+CREATE OR REFRESH STREAMING LIVE TABLE books_bronze
+COMMENT "the raw books data, ingested from CDC feed"
+AS SELECT * FROM cloud_files("${datasets.path}/books-cdc", "json")
+
+SILVER
+CREATE OR REFRESH STREAMING LIVE TABLE books_silver
+APPLY CHANGES INTO LIVE.books_silver
+	FROM STREAM(LIVE.books_bronze)
+	KEYS (book_id)
+	APPLY AS DELETE WHEN row_status = "DELETE"
+	SEQUENCE BY row_time
+	COLUMNS * EXCEPT (row_status, row_time)
+
+GOLD
+CREATE LIVE TABLE author_counts_state
+	COMMENT "Number of books per author"
+AS SELECT author, count(*) as books_count, current_timestamp() updated_time
+	FROM LIVE.books_silver
+	GROUP BY author
+
+Note - the above table can't serve as a streaming source for the new tables, Streaming source must be append only sources.
+
+DLT VIEW-  Scoped to the DLT pipeline they are a part of, so they are not persisted to the metastore. Views can still be used to enforce data quality.And metrics for views will be collected and reported.
+CREATE LIVE VIEW books_sales
+ AS SELECT b.title, o.quantity
+	FROM (   
+		SELECT *, explode(books) AS book
+		FROM LIVE.orders_cleaned) o
+	INNER JOIN LIVE.books_silver b
+	ON o.book.book_id = b.book_id
+
+Lakeflow Jobs
+=============
+To Orchestrate jobs with Databricks, Databricks allows you to schedule one or more multiple tasks as a part of a job.
+
+Databricks SQL
+==============
+DBSQL is a datawarehouse allows you to run all your SQL and BI applications at scale with a unified Governance model.
+ 
