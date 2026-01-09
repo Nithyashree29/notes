@@ -2404,7 +2404,200 @@ Lakeflow Jobs
 =============
 To Orchestrate jobs with Databricks, Databricks allows you to schedule one or more multiple tasks as a part of a job.
 
+Databricks Asset Bundels
+========================
+Bundle your code and deploy
+
 Databricks SQL
 ==============
 DBSQL is a datawarehouse allows you to run all your SQL and BI applications at scale with a unified Governance model.
  
+Data Objects Privileges
+=======================
+Data governance model in Databricks lets you programatically grant , deny and revole access to data objects.
+GRANT <PRIVILAGE> ON <OBJECT> <OBJECT-NAME> To <user or group>
+	Ex - GRANT SELECT ON TABLE my_table TO user_1@tiktok.com
+
+OBJECT and its scope
+CATALOG -> controls access to the entire data catalog
+SCHEMA -> controls access to a database
+TABLE -> controls access to a managed or external table.
+VIEW -> controls access to SQL views.
+FUNCTION -> controls access to named function
+ANY FILE -> controls access to the underlying filesystem.
+
+Privilage and its ability
+SELECT -> read access to an object.
+MODIFY -> add, delete, and modify data to or from an object.
+CREATE -> create an object.
+READ_METADATA -> view an object and its metadata.
+USAGE -> No effect! required to perform any action on an database object.
+ALL PRIVILEGES -> gives all privileges..
+
+Grant Privileges by Role
+Databricks administratoe -> All objects in the catalog and the underlying filesystem.
+Catalog owner -> All objects in the catalog.
+Database owner -> All objects in the database.
+Table owner -> only the table.
+
+Unity Catalog
+=============
+Centralized governance solution across all your workspaces on any cloud.
+Unify governance for all data and AI assets - files, tables, machine learning models and dashboards, based on SQL.
+
+UC Metastore
+	|
+Storage credential, external location, catalog, share(related to delta sharing, collection of tables shared with one or more recipient), Recipient (related to delta sharing)
+	|
+schema(databases)
+	|
+table, view, Function
+
+Identities
+==========
+users - identifies by e-mail addresses, account administrator
+Service Principles - Identified by application ID's, Service principles with administrative privilage.
+Groups - Grouping Users and service principles, nested groups.
+
+identity Federation - Unity catalog supports a feature called identity federation, where identities are simply created once in the account console, then they can be assigned to one or more workspaces as needed.
+So identity federation eliminates the needs to manually create and maintain copies of identities at workspace levels.
+
+Features of unity catalog
+=========================
+centralized governance for data and AI
+buit-in data search and audit logging.
+Automated lineage
+No hard migration required.
+
+<!--  May 11th, 2026 -->
+
+Note - for governance and auditing unity catalog logs all details in the system db - system.access.db
+
+Delta Sharing
+=============
+Data provider -> Delta sharing protocol -> Data Recipient
+The data provide can share delta lake tables via a delta sharing server, which implements the server side component of the protocol.
+Works - the data recipient who wants to query a source table such as the orders table start by sending a request to the data sharing server. the server checks the access permissions and see whether this access is allowed, If so it checks the underlying table files in the cloud storage system like Amazon S3 it generates temporaray URL's for accessing those specifix files. Then it send these URL's back to the client. The client now can open these https links to actually transfer the relevent objects directly from the cloud object store. This mean that with this protocol, you can share massive datasets as it directly leverages the cloud optimized infrastructure for data transfer.
+In databricks you have a integrated secure delta sharing server and you can set access permissions using Unity Catalog.
+you can just create share and grant permissions
+CREATE SHARE Bookstore;
+ALTER SHARE bookstore
+ADD TABLE orders;
+
+GRANT SELECT ON SHARE bookstore TO publisher1
+
+Two ways of sharing
+1. Databricks-to-Databricks sharing protocol - share data between databricks clients, collection of tables, views, volumnes, and notebooks.
+2. Databricks open sharing protocol - share data with users on any computing platform.
+
+Costs
+======
+Delta sharing does not require data replication.
+Egress cost - Within a region: no egress cost, Cross-clouds or cross regions: cloud vendor charges data egress fees, instead: (if no egress can use cloudfare etc..)
+
+Limitations
+===========
+1. read-only access model
+2. data format constraints - only delta tables are supported for sharing.
+
+Lakehouse Federation
+====================
+data ingestion is recommended for most use cases
+	High data volumnes
+	low latency quering
+	third party API limits
+However the ingestion results in duplicate data that may become stale 
+	Use delta sharing to receive live data from the source
+However this is limited to Delta lake format.
+Instead use lakehouse federation
+	Run queries against multiple data sources
+	No data migration.
+
+Use cases
+	Maintain live access to external systems.
+	Ad hoc reporting or proof-of-concept access to operational data stored in external databases.
+
+limitations
+	Complex queries don't benefit from the power of Databricks.
+
+Cluster Best Practices
+======================
+Databricks compute is divided into two main categories: 
+classic compute - The classic compute provides you with a flexible and customizable infrastructure resources that are handled by your cloud provider 
+	Allpurpose - used to run interactive notebooks for dev and adhoc data analysis, Created using the Web UI, command line, REST API.Manually terminated, or auto terminated after a period of inactivity. DBUs more expensive.
+	Jobs - Used to run automated jobs and pipelines (like lakeflow jobs and declarative ETL pipelines ). Created automatically by Databricks job scheduler.Terminate when job is completed. tend to be more costly effective than all-purpose clusters. DBUs less expensive.
+	Instance pools
+	SQL warehouses
+serverless compute - Offers a simplified and fully managed experiemce where resources are automatically handled by Databricks, no need to manually configure or manage the underlying infrastructure.
+	Notebooks
+	jobs
+	Pipelines
+	SQL warehouses
+
+Instance Family
+===============
+Memory Optimized
+	where a lot of shuffle and spills are involved.
+	When spark caching is needed
+	For ML workloads.
+
+Compute Optimized
+	STructured streaming jobs
+	ELT with full scan and no data rescue
+	To run OPTMIZE and Z-order Delta commands
+
+Storage Optmized
+	To leverage Delta caching
+	For ad hoc and interactive data analysis
+	ML and DL workloads with data caching
+
+GPU Optimized
+	ML and DL workloads with an exceptionally high memory requirement
+
+General Purpose 
+	Used in absence of specific requirements
+	To run VACUUM Delta command
+
+Spot instances
+	Low-cost virtual machines
+	Users bid for unused capacity, but the instances can be interrupted if the market price exceeds the bid.
+	Spot insances allow you to leverage unused coud caacity of virtual machines at a lower price, which can significantly reduce the cost of running your data applications.
+	However the downside is that these instances can be stopped at any time by your cloud provider, which can interrupt your jobs. So they are ideal for temporary or batch workloads such ETL jobs or mahcines.
+
+Databricks pools
+	Set of idle, and ready-to-use instances
+	reduce cluster start and auto-scaling times.
+	Cloud provider charge
+
+serverless compute
+	On-demand, scalable computing resources without configurations.
+	Avoid the operational overhead of managing and tuning clusters.
+	Rapid start-up and scaling times.
+	Runs latest Databricks Runtime.
+	Support only Python and SQL
+
+Serverless compute
+	Fully managed without configuration
+	photon engine is enabled by default
+	Automatic access to latest features
+	Automatic instance type selection
+	Automatic scaling
+	Rapid startup time
+	Supports only python and sql
+
+Classic compute
+	Offers additional control and configuration
+	Photon engine is optional
+	requires manual upgrade of runtime versions
+	requires manual selection of instance type
+	autoscaling requires manual configurations.
+	takes few minute to start
+	support python, sql , scala, r, java
+
+SQL warehouses
+	Highly optmized for SQL workloads
+	Serverless SQL warehouses
+		ETL, Business intelligence, Exploratory analysis
+	Pro SQL warehouses
+		If serverless are not available
+		For custom-defined networking (databases/event buses in your cloud network or on-premises)
