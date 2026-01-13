@@ -1903,13 +1903,47 @@ Note - Deletion vectors are enabled be default when you create a new table using
 
 Deletion vectors are a storage optimization feature you can enable on Delta Lake Tables. By default when a single row in a data file is updated or deleted, the entire Parquet file containing the record must be written. wuth deletion vectors enabled for the tbale, DELETE, UPDATE and MERGE operations create small files called "Deletion vectors" to mark existing rows as removed or changed without rewriting the Parquet file. Subsequent reads on the table resolve the current table state by applying the deletions indicated by deletion vectors to the most recent table version.
 
+Deletion vectors indicate changes to rows as soft-deleted that logically modify existing  parquet data files in the delta lake table. These changes are applied physically when one of the following events causes the data files to be rewritten.
+	An optimize command is run on the table.
+	Auto compaction triggers a rewrite of a data file with a deletion vector.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Python UDF
 ==========
 python udf's are not usable for sql, to register you can use and it creats both sql and py udf as below
 apply_discount_py_udf = spark.udf.register("<UDFsql FUNCTION>", <udfname>)
 
+df.groupby('key').applyInPandas(custom_function, schema)
+you apache spark you can apply custom pandas-based operations on grouped data within pyspark dataframe. This allows you to perform group-level operations using familiar pandas code while still benefiting from sparks distributed processing engine. To achieve this, use the applyInPandas function.
+applyInPandas is widely used in data science workflows, particularly when analysis want to integrate Pandas rich ecosystem into scalable Spark pipelines.
 
+v 
 ==========================================================================================================
 GIt folders - 
 Version history , we can just move to the versions and can be deleted easily and no branches or anything can be created.
