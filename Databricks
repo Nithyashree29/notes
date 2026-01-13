@@ -1901,10 +1901,14 @@ These changes are applied physically when one of the following events causes the
 delta.enabledDeletionVectors
 Note - Deletion vectors are enabled be default when you create a new table using a SQL warehouse or Databricks Runtime 14.1 or above.
 
+Deletion vectors are a storage optimization feature you can enable on Delta Lake Tables. By default when a single row in a data file is updated or deleted, the entire Parquet file containing the record must be written. wuth deletion vectors enabled for the tbale, DELETE, UPDATE and MERGE operations create small files called "Deletion vectors" to mark existing rows as removed or changed without rewriting the Parquet file. Subsequent reads on the table resolve the current table state by applying the deletions indicated by deletion vectors to the most recent table version.
+
+
 Python UDF
 ==========
 python udf's are not usable for sql, to register you can use and it creats both sql and py udf as below
 apply_discount_py_udf = spark.udf.register("<UDFsql FUNCTION>", <udfname>)
+
 
 ==========================================================================================================
 GIt folders - 
