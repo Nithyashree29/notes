@@ -2037,15 +2037,58 @@ Since just be delete it wont completely remove the records/files ypu can move to
 		.filter("_change_type = 'delete'"))
 to fully reflect you need to run VACUUM command on these tables.
 
+Lakeflow Declarative Pipelines
+==============================
+LDP is a declarative ETL framework powered by Apache Spark for building reliable and maintainable data pipelines.
+It is based on Apache spark, but uses a declarative approac for developing pipelines.
+It means you just define the desired outcome of data transformations wuthout managing the execution.
+OpenSource - Spark declarative pipelines.
 
+Benefits of LDP
+===============
+Automatic orchestration
+Handle checkpoit, retires, and optimization.
+Easy to implement CDC, SCD Type 2 and data quality control.
 
+SPARK vs LDP
+spark.readStream
+	.format("cloudFiles")
+	.option("cloudFiles.format", "json")
+	.load("<path>")
+   .writeStream
+   .option("checkpointLocation", "/path")
+   .table("order_raw")
 
+@dp.table
+def orders_raw():
+	return (spark.readStream
+				.format("cloudFiles")
+				.option("cloudFiles.format", "json")
+				.load("<path>"))
 
+spark - Can not create streaming tables in spark SQL syntax only. Need to pass by PySpark to register streaming tables.
+LDP - Support creating streaming tables in SQL via CREATE STREAMING TABLE command.
+To create an object in LDP - CREATE OR REFRESH OBJECT <object_name>
+OBJECTS can be - STREAMING TABLE(permanent), Handle incremental refresh, Used for data ingestion from streaming sources(append-only) ex - spark.readStream, STREAM(),Support near real-time data ingestion.
+MATERIALIZED VIEW(permananet), Handle full or incremental refresh (serverless-only ), Used for precomputing complex BI queries, or for data ingestion from non-streamable sources, ex- spark.read, Not designed for low-latency use cases.
+TEMPORARY VIEWS(just scoped to pipeline they are part of, so they are not peristed to catalog), handles data through full refresh processing, where entire datasets ae reloaded and replaced with each pipeline run.On serverless compute, come queries can be optimized to incremental refreshed.
+Used for intermediate transformations and data quality checks.
+with declarators @dp.table, @dp.materialized_view, @dp.temporary_view.
 
+LDP(.py or .sql) vs DLT(old)(DLT )
+modle import - from pyspark import pipelines as dp  // import dlt
+Streaming table - @dp.table                               @dlt.table
+					def func()                        			def func()
+						return spark.readStream...                 return spark.readStream..
+Materialized view   @dp.materialized_view            // @dlt.table
+						def func() 							def func()
+							return spark.read...				return spark.read...
 
+Temporary           @dp.temporary_view               // @dlt.view
+						def func()							def func()
+							return ...							return 
 
-
-
+ 
 
 
 
