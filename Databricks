@@ -2088,12 +2088,56 @@ Temporary           @dp.temporary_view               // @dlt.view
 						def func()							def func()
 							return ...							return 
 
- 
+Data Quality Expectations in LDP
+=================================
+Enforce a data quality through constraints
+CREATE OR REFRESH OBJECT <object_name> (CONSTRAINT <constraint_name> EXPECT(condition))
+Collect metrics on constraint volations.
+By default, records violating constraints will be kept.
+Define different actions.
+	(CONSTRAINT <name> EXPECT(condition) [ON VIOLATION ACTION])
+Example
+	CREATE OR REFRESH STREAMING TABLE my_table(
+		CONSTRAINT recent_status EXPECT (status = 'ACTIVE' AND date >= '2025-01-01'),
+		CONSTRAINT positive_value EXPECT (value>0) ON VIOLATION DROP ROW,
+		CONSTRAINT valid_id EXPECT (id is NOT NULL) ON VIOLATION FAIL UPDATE
+	)
+@dp.table
+@dp.expect("recent_status", "status = 'ACTIVE' AND date >= '2025-01-01'")
+@dp.expect_or_drop("positive_value", "value>0")
+@dp.expect_or_fail("valid_id", "id is NOT NULL")
+def my_table():
+	spark.readStream.table("source")
+
+Actions             SQL syntax                Python syntax
+Warn 			   EXCEPT(....)               dp.expect, dp.expect_all
+Drop               EXPECT(...) ON VIOLATION DROP ROW   dp.expect_or_drop, dp.expect_all_or_drop
+Fail               EXPECT (....) ON VIOLATION FAIL UPDATE   dp.expect_or_fail, dp.expect_all_or_fail
+
+AUTO CDC -simplify change data capture processing.
+Replace MERGE INTO statement.
+Support SCD type 1 and type 2
+
+SQL Syntax
+==========
+CREATE FLOW flowname AS
+AUTO CDC INTO target_table
+FROM stream(cdc_source_table)
+KEYS (key_field)
+APPLY AS DELETE WHEN operation_type = "DELETE"
+SEQUENCE BY sequence_field
+COLUMNS * EXCEPT (operation_type, sequence_filed)
+STORED AS SCD TYPE 1;
 
 
 
 
-==========================================================================================================
+
+
+
+
+
+===================================================================================================
 GIt folders - 
 Version history , we can just move to the versions and can be deleted easily and no branches or anything can be created.
 Git folders provide source control for your data projects by integrating them with Git providers like GitHub.
