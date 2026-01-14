@@ -1943,7 +1943,113 @@ df.groupby('key').applyInPandas(custom_function, schema)
 you apache spark you can apply custom pandas-based operations on grouped data within pyspark dataframe. This allows you to perform group-level operations using familiar pandas code while still benefiting from sparks distributed processing engine. To achieve this, use the applyInPandas function.
 applyInPandas is widely used in data science workflows, particularly when analysis want to integrate Pandas rich ecosystem into scalable Spark pipelines.
 
-v 
+Lakeflow Jobs
+=============
+spark.conf.set("spark.databricks.delta.optimizeWrite.enabled", True)
+spark.conf.set("spark.databricks.delta.autocompact.enabled", True)
+
+dbutils.widgets.text("number_of_files", "1")
+num_files = int(dbutils.widgets.get("number_of_files"))
+
+Under tasks -> add parameters -> key(number_of_files), value(1)
+Create a job cluster under cluter_name -> A job cluster auto terminates once the job is completed, which saves costs compared to all-purpose clusters.
+
+A job cluster auto terminates once the job is completed . which saves costs compared to all-purpose clusters.
+once you create pipeline and run the job -> under runs/ tasks -> go to runs and there under job run details and compute you can find options like view cluster, SparkUI, Logs, MAetrics
+
+Advanced Job Configurations
+===========================
+You can use time based schedule orcron jobs.
+and the job run based on the owner of the job and if you want to change you can change the permissins settings.
+Note - Important remanrk here is that the owner must be an individual user, not a group of users.
+	The creator username does not change when the owner privilege is tabken by another user.
+	Admin group has the can managage permission , granting them full permission on the job.
+If a task fails during a run, only the depending tasks wil be skipped while parallel tasks will be successfully completed.
+In the failed run page -> repair run opition -> This is a great option that will rerun only the faied tasks.
+
+Propagating Deletes
+===================
+Delete requests are also known as requests to be forgotten. They require user data that represent personally ientifiable information or PII. 
+
+from pyspark.sql import *
+
+schema = "customer_id STRING, email STRING, first_name STRING, last_name STRING, gender STRING, street STRING, city STRING, country_code STRING, row_satus STRING, row_time timestamp"
+
+(spark.readStream
+	.table("bronze")
+	.filter("topic = 'customers'")
+	.select(from_json(col("value").cast("string"), schema).alias("v"))
+	.select("v.*, col('v.row_time').alias("request_timestamp"))
+	.filter("row_status = 'delete'")
+	.select("customer_id", "request_timestam",....)
+	
+	.writeStream
+		.outputMode("append")
+		.option("checkpointLocation", "dbfs:/mnt/checkpoint")
+		.trigger(availableNow=True)
+		.table("<delete_reuests>)"
+	)
+These requests are recieved in the bronze table as CDC feed of type "delete" in the customers topic.
+While it is possible to process deletes at the same time as insertd and updates CDC feed.,the fines around right to forgotten requests may require a separate process.
+
+DELETE FROM customers_silver
+WHERE customer_id IN (SELECT customer_id FROM delete_requests WHERE status = 'requested')
+
+In the earlier customers tables we enabled the CDF, so we can leverage CDF data as an incremental records of data changes to propogate deletes to downstream.
+Here we can figure an invreamental read of all changed events commited to the customers table.
+(spark.readStream
+	.format("delta")
+	.option("readChangeFeed", "true")
+	.option("startingVersion". 2)
+	.table("customers_silver"))
+
+We define a function to be called with foreachBatch in order to process the delete events.
+
+def process_deletes(microBatchDF, batchId):
+	(microBatchDF
+		.filter("_change_type, 'delete'"))
+	
+	microBatchDF._jdf.sparkSession().sql("""
+		DELETE FROM customers_orders
+			WHERE customer_id IN (select customer_id FROM deletes)
+			""")
+
+	microBatchDF._jdf.sparkSession().sql("""
+		MERGE INTO delete_requests R
+		USING delets d
+		ON d.customer_id = r.customer_id
+		WHEN MATCHED
+			THEN UPDATE SET status = "deleted"
+		""")
+
+(deleteDF.writeStream
+	.foreachBatch(process_deletes)
+	.option("checkpointLocation", "dbfs:/mnt/demo_pro")
+	.trigger(availableNow=True)
+	.start())
+
+To view hostory - DESCRIVE HISTORY <table>
+Since just be delete it wont completely remove the records/files ypu can move to any version
+(spark.read
+		.option("readChangeFeed", "true")
+		.option("startingVersion", 2)
+		.table("customers_table")
+		.filter("_change_type = 'delete'"))
+to fully reflect you need to run VACUUM command on these tables.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ==========================================================================================================
 GIt folders - 
 Version history , we can just move to the versions and can be deleted easily and no branches or anything can be created.
