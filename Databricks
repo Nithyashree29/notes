@@ -1907,11 +1907,30 @@ Deletion vectors indicate changes to rows as soft-deleted that logically modify 
 	An optimize command is run on the table.
 	Auto compaction triggers a rewrite of a data file with a deletion vector.
 
+Note - For Materialized view always a non-streaming dataframe is expected .
+Remember in order to createa streaming table, your data source must be an append only source.
+The default refresh for materialized view on serverles compute attempts to perform an incremental refresh.
+w  
+CREATE OR REFRESH MATERIALIZED VIEW authors_stats
+COMMENT "Aggregated statistics of book sales per author in 5-minute windows"
+SELECT 
+	author,
+	windows.start AS window_start,
+	windows.end AS window_end,
+	COUNT("order_id") AS orders_count,
+	AVG("quantity") AS avg_quantity
+FROM books_sales
+GROUP BY 
+	author,
+	window(order_timestamp, '5 minutes', '5minutes', '2 minutes')
+ORDER BY
+	window_start;
 
-
-
-
-
+Query Profile - Query profile helps you troubleshoot performance bottlenecks during the query execution.
+In the performance tab it shows everything, aggregated task time shows the combined time it took to execute the query across all the ores of all nodes. It can be significantly longer than the wall clock duration if multiple tasks are executed in parallel.While it can be shorter than the wallclock duration if task waited for available nodes.
+The detailed query profile includes summary metrics on the left side of the panel, and the graph view operators on the right.
+3 tabs, details(shows the summary metrics we have just explored.), Top operators (shows the most expensive operations used in your query in terms of time spent , memeory peaks, number of processes rows which can be used for optimization opportunities.with dag graph too for detaild explanation)
+, query text(shows the full text of the query)
 
 
 
@@ -2129,6 +2148,25 @@ SEQUENCE BY sequence_field
 COLUMNS * EXCEPT (operation_type, sequence_filed)
 STORED AS SCD TYPE 1;
 
+Sequence By - Specify the logical order of CDC events in the source data.
+	Used to automatically handling out-of-sequence records.
+Two data structures are created
+	Taget view
+	_apply_changes_storage_target backing table
+		Extra information (eg - tombstones) to handle out-of-order data
+Sequence on multiple columns
+	SEQUENCE BY STRUCT (operaion_timestamp, operation_number)
+
+Python
+create_auto_cdc_flow(
+	target = "target_table",
+	source = "cdc_source_table",
+	keys = ["key_field"],
+	sequence_by = col("operation_date"),
+	apply_as_deletes = expr("operation_type = 'DELETE'"),
+	except_column_list = ["operation_type", "operation_date"],
+	stored_as_scd_type = 1 
+)
 
 
 
