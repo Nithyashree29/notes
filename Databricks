@@ -1932,13 +1932,32 @@ The detailed query profile includes summary metrics on the left side of the pane
 3 tabs, details(shows the summary metrics we have just explored.), Top operators (shows the most expensive operations used in your query in terms of time spent , memeory peaks, number of processes rows which can be used for optimization opportunities.with dag graph too for detaild explanation)
 , query text(shows the full text of the query)
 
+Job parameters are automatically pushed down to all tasks.If you have a task parameter with the same name, it will be automatically overridden by the job.
+
+Databricks Asset Bundels
+=========================
+Tool for automating the deployment of Databricks workflows across multiple environments.
+Can use CLI - databricks bundle init
+			  databricks bundle validate
+			  databricks bundle deploy -t <targte-name>
+			  databricks bundle run <job-name> -t <target-name>
+
+The process starts by using git to track changes in your bundle, roject and setting up CI CD pipelines.
+  
+Relative Imports
+================
+We know the %run magic command is used to run another notebook from the current notebook.
+
+Databricks API
+
+Databricks CLI
+The CLI provides an interface to interact with Databricks platform from your command line console
+ 
 
 
 
 
-
-
-
+ =7777777777777777777777777777777777777777777777777777777777777777777777L 
 
 
 
@@ -2870,3 +2889,164 @@ SQL warehouses
 	Pro SQL warehouses
 		If serverless are not available
 		For custom-defined networking (databases/event buses in your cloud network or on-premises)
+
+
+
+******************
+in Databricks SQL, there are two forms to set tags on table
+The plural form of using 
+ALETR TABLE table_name SET TAGS ('tag_key1' = 'tage_value1', 'tag_key2' = 'tag_value2')
+ALTER TABLE table_name SET TAGS ('tag_key' = 'tag_value');
+
+The singular form using SET TAG ON TABLE
+SET TAG ON TABLE table_name tag_key = tag_value,
+Tag value is an optional param SET TAG ON TABLE table_name tag_key;
+
+Optimized writes and Auto compaction automatically generate smaller data files to redue the duraction of future MERGE operations.
+Having many small files can help minimize rewrites during some operations like merge and deletes. For such operations, Databricks can automatically tune the file size of delta tables, As a result, it can generate data files smaller than the default 128 MB. This helps in reducing the duration of future MERGE operations.
+
+GRANT MANAGE ON CATALOG hr_catalog TO hr_team -> It gives ability to control the catalog's access permissions by granting or revoking privileges. In unity catalog the MANAGE privilege allows delegating permission management to a user or a group without giving them full admin rights.
+
+databricks secrets create-scope api-scope
+databricks secrets put-secret api-scope api-key
+
+Grant permissions at the catalog level apply to current and future objects in the catalog.With unity catalog inheritance model, you can grant a user the SELECT privilege on a catalog or schema, which automatically grants the user SELECT privilege on all current and future tables, anf views in the catalog or schema.
+
+The permission mapping is used to specify the access control lists (ACLs) for the job, defining which users or groups have what level of access (like CAN_MANAGE or CAN_VIEW)
+
+If you want to refresh the data in the table which is deep cloned then 
+CREATE OR REFRESH TABLE order_archive
+DEEP CLONE orders
+The above command can sync changes from the source to the target locations, 
+if you run DESCRIBE HISTORY order_archive, you will see a new version of CLONE operation occured on the table.
+
+DESCRIBE TABLE EXTENDED or DESCRIBE EXTENDED allows to show the added table constraints in the table properties files 
+
+The dense_rank() function assigns consecutive rank numbers based on the ordering within each department while ensuring that employees with the same salary recieve the same rank or tier
+
+unlike rank(), which skips numbers after ties (1,1,3)
+dense_rank() produces a continuous sequence (1,1, 2), matching the desired output.
+row_number() would give each row a unique rank even if salaries are the same
+percent_rank() would instead assign fractional values between 0 and 1 than integer tiers.
+
+Automataic Liquid Clustering is designed to dynamically adapt to evolvng and unpredictable query patterns by continously reorganizing data based on recent query filters. This is specially beneficial when query predicates frequently change across multiple columns, making static startegies like partitining or Z-ordering less effective.
+
+partitioning works best when filters are stable and predictable, often on date/time columns.
+Z-ordering optimizes clustering for known for high cardinalliy columns with consistent filtering. 
+when query filters are varied and unpredicatble, Automatic Liquid Clustering provides the abilit to improve performance without manual tuning.
+
+When choosing partitioning columns, It's good to consider the fact that records with a given value (the activities of a given user) will continue to arrive indefinitely. In such a case we use a datatime column for partitioning. This allows your partitions to be optimized, and allows you to easily archive those partitions of previous time periods, if necessary.
+
+trigger(availableNow=True) is more compute efficient for one-time or scheduled batch runs as it processes all available data once and stops, avoiding the overhead of keeping a cluster running. While the processing Time option keeps the stream active continously, so its less efficient for nightly jobs.
+trigger(once=true) options for incremental batch processing. however this setting is now deprecated in the newer Databricks runtime versions.
+Databricks recommends you use trigger(availableNow=true) for all future incremental batch processing workloads.
+
+pyspark.sql.DataFrame.dropDuplicates function returns a new DataFrame with duplicate rows removed, optionally only considering certain columns.
+
+Delta Lake file statistics indicate per file:
+	Total number of records
+	Minimum value in each column of the first 32 columns of the table.
+	Maximum value in each column of the first 32 columns of the table.
+	Null value counts for in each column of the first 32 columns of the table.
+ These statistics are leveraged for data skipping based on query filters.
+
+Databricks secrets allows you to securely store your credentials and refrence them in notebooks and jobs. To prevent accidentally printing a secret to standard output buffers ir displaying the value during variable assignment, Datbricks redacts secret values that are red flag using dbutils.secrets.get() when displaying in notebook.
+
+Delete requests also known as requests to be forgotten, require deleting user data that represent personally identifiable information or PII, suvh as the name and the email of the user.
+
+because of how Delta lake tables time travel are implements, delted values are still present in older versions of the data. Remember, deleting data does not delete the data files from the table directly. Instead, it creates a copy of the affected files without these eleted records, so to fully commit these deletes, you need to run VACUUM commands on teh customers table.
+
+MERGE INTO command allows you to upsert data from the source table, view or DataFrame into a target Delta table. Delta lake supports inserts, updates and deletes in merge operations.
+
+pyspark.sql.functions.windows function bucketizes rows into one or more time windows given a timestamp specifying column.
+pyspark.sql.DataFrame.withWatermark functionss allows you to track state information for a window of time in which we expect ecords could  be delayed.
+
+in Spark swl, to explicitly hint that a smaller table should be broadcasted in a join, you can use the 
+/*+BROADCAST(table_alias) */ syntax before the SELECT keyword
+	SELECT /*+ BROADCAST(c) */
+		s.sales_id, s.amount, c.customer_name
+	FROM sales AS s
+	INNER JOIN customers AS c
+	ON s.customer_id = c.customer_id
+
+Broadcastig the smaller yables to all worker nodes so each partitions of the large table can join locally, avaoiding expensive shuffles across the cluster. This drastically reduces netwrok I/O and speeds up the join when one table is much smaller than other.
+
+When performing stream-stream join, Spark buffers past inputs as a streaming state for both input streams, so that it can match every future input with past inputs. Thia state can be limited by using watermarks.
+
+the sys.path variable contains a list of all directories where the PYTHon searched for module.
+
+Delta sharing is designed to securely share the data across platforms using an open protocol. Since teh vendor does not use Databricks,
+Delta sharing ensures secure, real-time access without manual exports or third party workarouds.
+
+	rules = {
+		"valid_check_in" : "(check_in IS NOT NULL)",
+		"valid_check_out: "(check_out IS NOT NULL)",
+	}
+	quarantine_rules = "NOT({0})".format(" AND ".join(rules.values()))
+
+	@dlt.table(partition_cols = ["is_quarantined"])
+	@dlt.expect_all(rules)
+	def silver_reservations()"
+		return (spark.readStream.table("bronze_reservations").withColumn("is_quarantined", expr(quarantine_rules)))
+	The function streams all rows from the bronze_reservations table into the silver_reservations table, adds a new Boolean column called is_quarantine to flag records with missing check-in or check-out dates, and partitiones the table by that flag.
+		The dlt.expect_all(rules) decorator applied data quality expectations but does not drop invalid rows, it simply records the validation results for monitoring purposes, As a result both valis and invali records are retained in the same table, making it easy to trace and fix data quality issues without losing information.
+		The design is a common pattern in lakeflow declarative pipelines for managing data quality. instead of discarding bad data outright, teams odten quarantine it within same dataset by tagging and partitioning. This allows fpr continous ingestion aND VALIDATation of streaming data while supporting later review or remediation of problematic records, ensuring both reliability and auditability in production data pipelines.
+
+The badRecordsPath option is the standard configuration for handling bad records in AutoLoader
+The badRecordsPath option is a Spark standard for the JSON format (and other formats like CSV). when set, any file that cannot be parsed due to malformed syntax is moved to that saprcified path, fulfillig the requirements fo excluding badly-formed JSON. 
+
+In LDP SEQUENCE BY is used to define processing order for CDC streams and using STRUCT allows specifying a composite key of multiple columns. This ensures that records are ordered first by transaction_timestamp and, in case of ties, by version_number, which allows handling late-arriving data correctly.
+
+dbutils.widgets allow you to add parameters to your notebooks.
+The defined parameters can be passed from Databricks jobs by adding them to the parameters section in the task configuration.
+
+The issue described is disk spill during a Spark analytical query. disk spill occurs when the data being processed does not fit into the memory allocated for a task, so Spark writes intermediate data to disk, which is much slower than in-memory processing.
+
+The following option effectively reduce disk spill
+	Reduce the size of spark partitions - Smaller partitions can help memory pressure per task because each task handles less data that can it in memory.
+	increase memory size (core-to-memory ratio) - More memory allows spark to keep more data in-memory and reduce spills.
+	Increase the number of shuffle partitions - Increasing shuffle partitions spreads the data across more tasks  tasks, reducing memory pressure per task
+	However, more CPU cors allow more tasks to run in parallel, but it does not reduce the amount of memory each task requires. If memory per task is insufficient, disk spills will still happen So, this does not directly address the disk spill.
+
+The key advantage of using the transformation function in this scenario is that it allows for modular, composable, and testable transformations, because transform lets you apply resusable functions to a Datafarame in a clean, chainable way, making each transformation self-contained and easier to maintain, test and combine without affecting execution parallelism.
+
+In Databricks Delta Sharing, adding a table with history external recipients to both perform time travel queries and access Change Data Feed, if it's enabled. the WITH HISTORY option automatically exposes the complete table directory, enabling CDF consumption and historical queries.	
+	ALTER SHARE sales_share ADD TABLE products WITH HISTORY
+
+The Allow cluster creation entitlementt controls your ability to create clusters.
+Cluster-level permissions control your ability to use and modify a specific cluster. there are four permission levels for a cluster.
+
+Column masks in unity catalog are security features that dynamically control the visibility of sensitive data in specific columnss based on the identity or role of the user executing a query. Implemented as SQL user-defined functions, columns masks or transform the original column values at query runtime, ensuring that inauthorized users see redacted or anonymized data.
+	CREATE FUNCTION mask_ssn(ssn_string)
+	RETURN CASE WHEN is_member('hr_team')
+	THEN ssn ELSE '** ** ***' END
+
+	CREATE TABLE persons(name STRING, ssn STRING MASK mask_ssn)
+
+Liquid clustering is a replacement for both partitioning and Z-ordering , and they can't be used simultaneously on the same Delta table. Liquid clustering provides a more flexible and efficient way to cluster data than traditional fixed partiioning or Z-ordering
+Characteristics
+	Unlike ZORDER, liquid clustering supports incremental clustering operations that allow data to be organized efficeintly over time. Clustering operations using the OPTIMIZE command are incremental, meaning they only recluster data files that have changed, making the process efficient and fast.
+	Liquid clustering can easily eveolve as data patterns change, offering flexibility without manual repartitioning. Unlike traditional static partitioning, liquid clustering adapts seamlesslt to new lcustering keys.
+	Liquid clustering helps reduce skew in data distribution by maintaining balanced clustering across data files. The primary goal of clustering techniques like Liquid Clustering is to group sismilar data together across a minimal number of data files, which inherently helps to reduce data skew.
+
+The applyInPandas function used after groupBy operation, isdesigned exactly for this scenario. applying a python function that tasked and returns a Pandas DataFrame to each group of data within a Spark DataFrame, while preserving state variables that are local to each group's processing logic.
+
+The signature of the window function in Spark SQL is 
+ window(time_column, window_sie, slide_interval, starting_offset)
+ window_size -> how long each window lasts.
+ Slide_interval (sometimes called step): how often a new window starts.
+ satrting_offset: shifts all windows forward or backward in time.
+
+	window(event_time, '10 minutes', '10 minutes', '3 minutes')
+ window_size = '10 minutes', each window soans 10 minutes.
+ slide_interval = '10 minutes', Windows slide every 10 minutes, ie., non-overlapping.
+ starting_offset = '3 minutes',Windows start 3 minutes later than the naturak alignment
+
+The unity catalog explorer offers an AI-generated column comments feature. This fun tionality leverages a LLM to automatically draft descriptive comments for columns based on their names, data types,sample values and data patterns.
+
+Merge conflicts happen when two or more Git users attempt to merge changes to same lines of a file into a common branch and Git cannot choose the "right" changes to apply. Merge conflicts can also occur when a user attempts to pull or merge changes from another brnahc into another with uncommitted changes.
+	1. Accept all incoming or cuurent changes.
+	2. Manually edit the changes and remove the conflict markers.
+
+For a large, un-optimized table without partitioning or Z-ordering the filter colun, the data related to different birth dates is likely scatterd across many files, forcing the engine to read all, or almost all, table files.
+ ******************  
