@@ -3049,4 +3049,98 @@ Merge conflicts happen when two or more Git users attempt to merge changes to sa
 	2. Manually edit the changes and remove the conflict markers.
 
 For a large, un-optimized table without partitioning or Z-ordering the filter colun, the data related to different birth dates is likely scatterd across many files, forcing the engine to read all, or almost all, table files.
+
+dbutils.widgets allow you to add parameters to your notebook
+	dbutils.widgets.text("param", "default")
+	param = dbutils.widgets.get("param")
+
+Databrricks Query Profile is a diagnostic and visualization tool that shows query operations, execution metrics, and performance bottlenecks, helping users understand and optimize queries, but it does not allow direct editing or execution of parts of the query plan.
+
+In databricks jobs valid task types include
+	Python wheel 
+	SQL query
+	If/else condition
+
+CREATE TABLE AS SELECT, statement or CTAS statements create new Delta tables and populate them using the output of aa SELECT query, so when dropping the source table, the target table will not eb affected
+
+SELECT 
+	identity_metadata.run_as,
+	sku_name.
+	usage_date,
+	usage_quantity
+FROM system.billing.usage
+WHERE usage_unit = 'DBU'
+	The query aggregates the DBU usage by the user who ran the workload (run_as) and the specific resource_type (sku_name) on a daily basis
+	Here's the breakdown of why:
+		system.billing.usage - This is a system table that tracks bllings usage in detail.
+		usage-unit = 'DBU' this explicitly filters the records to only show consumption measured in Databricks Units (DBUs), the standard unit of consumption for compute.
+		identity_metadata.run_as - This column logs the user or service prinipal (identity) who ran the workload. This is the per user component.
+		Sku_name - This column identifies the specific type of computing resource (eg - ALL_PURPOSE_COMPUT, JOBS_COMPUTE, SERVERLESS_SQL) that consumed the DBUs this gives the type of computing resource detail.
+		USAGE_quantity -  This is the actual DBU consumption amount.
+		USAGE_date - This provides the temporal detail.
+
+spark.readStream
+	.option("readChangeFeed", "true")
+	.option("startingVersion", 0)
+	.table("customers")
+	.filter(col("_change_type").isin(["update_postimage"]))
+	.writeStrean
+		.option("checkpointLocation", "dbfs:/checkpoints")
+		.trigger(availableNow=True)
+		.table("customers_update")
+	The query uses spark.readStream to read teh table's changes captured by CDF as a streaming soirce. This lebverages checkpoiniting to track the progress of the stream processing and continue the stream from where it left off in the last execution.
+	The query then appends teh data to the target table at each execution since its using the default writing mode, which is 'append'
+
+END-to-END testing - Is an approach to ensure that ypur application can run properly under real-world scenarios. the goal of this testing is to simulate a real user experience from start to finish.
+
+Delta lake automatically captures statistics in the transaction log for each added data file of the table. By default Delta LAKE collects the statistics on the first 32 columns of each table. These statistics indicate per file.
+	Total number of records
+	Minimum value in each column of the first 32 columns of the table.
+	Maximum value in each column of the first 32 columns of the table.
+	Null value counts for in each column of the first 32 columns of the table.
+	These statistics are for data skipping based on query filters.
+
+Auto compaction is part of the Auto Optimization feature in Databricks. iT checks after an individual write, if files can be further be compacted, if yes, it runs an OPTIMIZE job with 128 MB file sizes instead of the 1GB the size used in the standard OPTIMIZE
+	Auto compaction does not support Z-ordering as Z-Ordering is significantly more expensive than just compaction.
+
+I fyou try to call such a window operations on a streaming DataFrames, This will generate an error indicating that "Non-time-based window operations are not supported on streaming Dataframes".
+INSTEAD, these window operations need to be implemented inside a foreachbatch logic.
+
+CREATE FUNCTION us_filter(region STRING)
+RETURN IF (IS_ACCONT_GROUP_MEMBER('finance_team'), true, region  = 'US')
+	This function peoperly enforces the desired row-level security logic. It first checks whether the current user belongs to the finance_team group using 
+	IS_ACCOUNT_GROUP_MEMBER('finance_team'). if the user is a member, the function returns true, allowing them to see all transactions records without restriction. For all other users who are not part of the finance team, teh function evaluates whether the region value equals 'US', thereby restricting their viisbility to only U.S. transactions.
+
+Because the inventory_updates table contains updates and deletes, ot breaks the append-only requirement of standard streaming tables. This means that we cannot directly stream from the base table or just skip change commits. Instead, since CHANGE DATA FEED si enabled the correct approach is to use spark.readStrean to cunsume akk inventory changes - inclusing inserts, updates and deletes - from the CDF output and apply them down stream usng AUTO CDC APIs 
+	Remembder to read the change data feed from a table, you need to set the option readChangeFeed to true when configuring a stream read from the table, as shown on the following syntax example
+		(spark.readStream
+			.option("readChangeFeed", "true")
+			.table("inventory_updates"))
+	Note that using spark.read here is a completely incorrec approach as it performs batch processing, not incremental processing, which would require a full table refresh each time. In addition, MERGE INTO command is not supported in lakeflow declarative pipelines, making this method unsuitable for incremental change propagation.
+
+Streaming tables are designed to handle near-real time data ingestion and incremental perocessing, allowing lakeflow Declarative pipelines to continously capture amd process new records as they arrive via AUTO loader, ensuring high performance and reliability, So streaming tables specifically support continous, real time updates, making them ideal for pipelines that require up-to-the moment data freshness.
+	While Materialized views (formarly known as live tables) provide batch-oriented or schedules incremental processing
+	Temporary views, in contrast, are ephemeral and not suited for persistent, incremental streaming workloads.
+
+Generally speacking we use CDF for sending incremental data changes to downstream tables in a multi-hop architecture. SO use CDF when only small fraction of records updated in each batch. Such updates are usually recieved from external sources in CDC format. if most of the records in the table are updated, or if the table is overwritted in each bach, like in the qiestion , don't use CDF
+
+When to use CDF and not to use CDF
+DElta changes include updates and or deletes    //      delta changes are append only
+Smmal fraction of records updated ine  each batch  //  most records in the table updated in each batch
+Data received frome xternal sources ois CDC format  // Dat recieved comprises destrictive loads
+Send data changes to downstream applications   // Find ad ingest data outside of the lakehouse
+
+In Apache Spark, the sha2(expression, bitlength) returns a check sum of SA-2 family as a hex string of an expression . it only supports specific SHA-2 bit lenths - 224, 256, 384, 512.Any other bit lebgth such as 128 is invalid and would cause the function to fail. Notice that bitlength 0 is equiva;ent to 256.
+
+Sending GET requests to the endpoint '/api/2.2/jobs/runs/list' allows you to retrieve all runs of a job.
+
+To perform streaming deduplication, we use dropDuplicates() function to eliminate records within each new micro batch. In addition, we need to ensure that records to be inserted are not already in the target table, we can achieve that using insert-only merge.
+
+pyspark.sql.DataFrame.withWatermark function allows you to only track state information for a window of time in which we expect records could be delayed.
+
+In order to ingest input json data into a taregt Delta table , we use Autoloader . Autoloader is based on spARK  Streuctured sStreaming and provides a Structured STreaming source called 'cloudFiles'
+	If you want the data ingestion to happen incrementally in near real-time, you can use the default trigger methid which is trigger (processingTime = "500ms"). this allows processing of data in micro batchs at a fized interval of half a second.
+
+If a task fails durng a job run, only the dependent tasks, if any wull be skipped . paralel tasks will run and complete.
+The failure of a tas will always be partial, which means that the operations in the notebool before the code failure will be successfully run and committed, whicle the operations after the code failue will be skipped
  ******************  
