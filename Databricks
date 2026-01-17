@@ -3238,5 +3238,174 @@ Cloudflare R2 removed egress costs, which helps significantly lower expenses whe
 
 By default, records that violate the constraint will still be written to the target table and reported as invalid in the pipelines metrics. Therefore, the constarint can simply e define as
 	CONSTRAINT valid_id EXPECT (id IS NOT NULL) without any ON VIOLATION clause 
-	
+
+
+The most suitable object for this use case is a Materialized view because it allows the data analyst to precompute and store business-level aggregations, such as total revenue, average order value, and units sold per category, so that downstream reports and dashboards can access the results quickly without recalculating them everytime, unlike a temporary or standard view, which either exist only for the session or require repeated recomputation, and unlike a streaming table, which is designed for processing raw, real-time event streams rather than pre-aggregated summaries.
+
+ACID fuarathees on Delta LAke ensure that all transactions are atomic. that is, they will either succeed or fail completely. So in this case, none of these records have been inserted into the table, even the ones that don't violate the constraints.
+
+Using liquid clustering on the combination of the user_id and event_date is the best choice to avoid exoensive scans. This technique incrementally optimizes data layout based on both columns, efficiently support filters on these columns and avoiding costly table scans.
+	Partitioning only on event_date helps queries filteing by date but doesn't optimize filtering by user_id, leading to potential full scans within partitions. Z-order indexing on user_id optimizes queries filtering on user_id but ignores event_date filtering, resultin in inefficint scans when filtering by date. Lastly, partitioning on user_id +Z-order on event_date supports filtering on both columns but can create many small partitions, causing management and performance issues.
+
+In Databricks, when you use the Repair run for a failed job, the dialog allows you to tweak parameters for that specific run. These changes do not overwrite the job's orignal configuration, they only apply to this repair run.
+To makethe parameter change permanent, you need to update the job's configuration itself.
+   
+Usually, if your computation was completely symmetric across tasks, you would see all of the statistics clustered tightly around the 50th percentile value, here we see that distribution is reasonable, except that we have a bunch of "MIn" values near zero. This suggests that we have almost empty partitiones
+
+In order to restart streaming queries on failure, its  recommended to configure Atructured streamin jobs with the following job configuration:
+	retries - set to unlimited
+	Maximum concurrent runs -  set to 1. there must be only one instance of each query consurrently active.
+	Cluster - Set this always to use a new job cluster and use the latest Spark version. Queries started in Spark 2.1 and above are recoverable after query and Spark version upgrades.
+	Notifications - Set this if you want email notification on failures.
+	Schedule - Do not set a schedule.
+	Timeout - Do not set a timeout . streaming queries run for an indefinitely long time.
+
+IN PySpark, to verify the equality of two dataframes, the correct function to use is 
+pyspark.testing.assertDataFrameEqual(actual, expected). this function compares the two Dataframes element-wise, checking for exact equality by default. It allows for optional parameters to control the comparision behavior such as ignoreColumnOrder and ignoreNullable . if the DataFrames do not match, the functionraises a PysparkAssertionError and provides a detailed diff of the differences.
+
+Partitioning on datetime columns can be leveraged when removing data older than a certain age from the table. For example, you can decide to delete previous months data. In this case, file deletion will be cleanly along partition boundaries.
+	Similarly, data could be archived and backed up at partition boundaries to a cheaper storage tier. This drives a huge savings on cloud storage.
+
+Predictive Optimization in Databricks UNITY CATALOG automatically optimizes managed tables in Unity Catalog by:
+	Running background maintenance tasks like VACUUM, OPTIMIZE and ANALYSE to reduce fragmentation and improve performance.
+	Collecting table statistics during writes, which helps the query optimizer make better decisions and improve query speed.
+
+Automatic Liquid Clustering in Delta LAke is enbaled using CLUSTER BY AUTO . this allows Delta to automatically manage clustering based on query patterns and data distribution without manually specifying columns
+	CREATE OR REPLACE TABLE orders(id INT, update date, value double)
+	CLUSTER BY AUTO;
+
+The Query Profile view provides three panels: DEtails, Top operators, Query text, which give insights into query eecution metrics, the main operations involved, and the actual SQL code.
+
+The best approach is use an init script to install the library during cluster startup, because init scripts run automatically whenever the cluster starts, ensuring the python library is consistently installed on all nodes before any jobs or notebooks execute, whereas manual installation , per-notebook installation, or uploading files post-startup are error-prone, inconsistent, and require extra manual steps.
+
+the correct command to apply the function as a row filter to the Delta lake table is :
+	ALTER TABLE employees SET ROW FILTER fr_filter ON (region)
+
+Sending POST requests to the endpoint '/api/2.2/jobs/run-now' allows you to trigger a job run using the job_id.
+
+In Databricks jobs, all time based references are based on a timestamp in the UTC timezone, including is_weekday, iso_weekday, iso_datetime, iso_date.
+
+To perform streaming deduplication, we use dropDuplicates() function to eliminate duplicate records within each new micro batch. In addition, we need to ensure that records to be inserted are not already in the target table. We can achieve this using insert-only merge.
+
+CREATE TABLE AS SELECT statemnets, or CTAS statements create new Delta tables and populate them using the putput of a SELECT query. So, the query result is stored in Delta format in the directory of the newly created table.
+
+Databricks-to-Databricks tabe shares can improve performance by enabling history sharing using the WITH HISTORY clause. Sharing history improves performance by leevraging temporary security credentials from your cloud storage, scoped-down to the root directory of the provider's shared Delta table, resulting in performance that is comparable to direct access to source tables.
+
+the rescue mode ensures that the schema does not evolve, so the stream will not fail if new columns are added. Instead, any new columns are stored in the rescued data column, allowing later inspection without interrupting the stream. This meets the requiremnt to keep the stream running without failures and still captures new schema elements.
+
+Unit testing is an approach to testing units of code, si=uch as functions. So, if you make any cahnages to them in the future, you can use unit tests to determine whether they still work as you expect them to.
+assert func() == expected_value, are used in unit tests to check if certai assumptions remain true hile you're developing the code.
+
+N matter what you hash, SHA-256 will still generate 256 bits , typically represented as 64 hexadecimal characters. When represnted as a hexadecinal string, a 256-bit hash is always 64 characters long 
+
  ******************  
+Reading table's changes, captures by CDF, using spark.read means that you are reading them as a static sorce So each time you run the query, all the tables changes (starting from the specified starting version ) will be read
+	The query in the question then writes the data in mode "overwrite" to the target table. Which completely overwrites the table at each execution.
+
+In Spark UI, the stage details page shows summary metrics for completed tasks. This includes
+	Duration of tasks.
+	GC time is the total JVM garbage collection time.
+	Shuffle spill (memory) is the size of the deserialized form of the shuffled data in memory
+	shuffle spill (disk) is the size of the serialized form of the data on disk
+	etc
+	DBU cost is not part of Spark UI. DBU stands for Databricks Unit and it is a unit of processing capability per hour for pricing purposes. This depends on your cluster configuration which tells you how much DBUs wpuld be consumed if a virtual machine runs for an hour, and then pays for each DBU consumed.
+
+To enable Automatci Liquid Clustering on a Delta table in Databricks, two prerequisites are required
+1. Table must be a unity catalog-managed table -  Automatic liquid clustering works only on tables maanged by unity catalog. external tables are not aupported
+2. Table must have predictive optimization enabled - Predictive optimization provides the system with insights on access pattens, which is Liquid Clustering Leverages to automatically optimize data layout.
+
+Databricks-to-dtabricks sharing enables data sharing exclusively between databricks cliemts, while the open sharing protocol (D2O) allows any platform that implements the delta sharing open standard to access shared data. 
+
+dlt.expect_all - enforces all the specified data quality rules, writes both valid and invalid records to the target table, and captures metrics about any ruke violations.
+dlt.expect -> would not fully meet the requiremnt because it applies expectations individually but doesnot automatically enforce all of them together as a group.
+dlt.expect_or_drop - removes individual invalid records.
+dlt.expect_or_fail - stops the pipeline on individual rule violations.
+you can use multiple together using dlt.expect_all_or_drop, dlt.expect_all_or_fall
+
+The solution to have specific columns -> is to create a view on the table where the required columns can be renamed, and the sensitive data that can be filtered out with the WHERE clause.
+
+A delta sharing identifier is a unique string used in Databricks-to-Databricks sharing to identify a recipient's Unity Catalog metastore. This identifier allows the data provider to grant access to shared data.
+they can get the unique identifier from the catalog explorer or by running SELECT CURRENT_METASTORE()
+
+The workspace jobs UI does not allow data engineers to programmatically trigger a ,ulti-task job run. It's a graphical interface that requires manual interaction and cannot be used for automated or code-based job execution.
+While the REST API, command -line interface, amd databricks SDKs all provide programmatic ways to run jobs.
+
+databricks redacts secret values that are read using dbutils.secrets.get(). when displayed in notebook cell output, the secret values are replaced with REDACTED string.
+However, is there a workaround to print the values of Databricks secrets in plain text by iterating through the secret and printing each character.
+
+The validate option inthe notebook identifies syntaz or comfiguration erros in the pipeline definition before execution, reducing the risk of runtime failures or writing partial data.
+
+Automatic liquid clustering in databricks is a feature designed to automatically optimize the physical layout of data in delta tables, based on the access patterns and metadata statistics. it leverages predictive optimization, which uses query behaviour analytics to select clustering keys dynamically.
+
+databricks bundle generate- it allows the data engineer to generate bundle configuration for a resorce that s is already exists in your Databricks workspace. This generates a YAML definition of a job, pipeline, app, or dashboard and automatically downloads any artifacts it refrences, such as notebooks.
+
+The correct databricks cli command that allows a data engineer to list all runs of a job that started at or after a specific time is databricks jobs list-runs --job-id <job-id> --start-time-from <time-value> as --start-time-from is the proper parameter used to filter job runs based on their start time in the Databricks CLI.
+
+Consider using a view when 
+- Your query is not complex. Because views are computed on demand, the view is re-computed everytime the view is queried, so frequentky querying complex queries with joins and subsequent increase in compute costs.
+- You want to reduce storage costs. Views do not require additional storage resources.
+
+Consider using a gold table when
+- Multiple downstream queries consume the table, so you want to avoid re-computing complex adhoc queries evrytime.
+- Query results should be computed incrementally from a data source that is continuosly or incrementally growing.
+
+Databricks Asset bundles are a feature of the Databricks CLI. To enable the CLI to authenticate to Databricks without managing Databricks secrets, its recommended to use OAUTH token federation for a Databricks service principal in the target workspace.
+
+IN Databricks SQL, materialized views are unity catalog manages tables that physically store the results of a query. Unlike standard views which  compute results on demand, materialized views cache the results and update them as the underlying source tables change; either on a schedule or automatically. By pre-computing expensive or frequently used queries, Materialized views lower query latency and resource consumption. This optimizes performance for complex aggregations and accelerate BI dashboards performance.
+Summary 
+	Physically stores the results of a query.
+	Can be refreshed automatically or on a schedule.
+	Optimized for complex aggregations and business intelligence workloads.
+
+Before sheduling notebooks in production, you may need to refactor your code. As a general rule, make sure you comment out:
+	uNWANTED files removel or tables dropping commands added during development.
+	Display actions or SQL queries added for debugging purposes.
+
+DataFrameWriter.mode defines the writing behaviour when data or table already exists
+options include
+- append append contents of the datafrmae to existing data.
+- overwrite overwrite existing data.
+- error or erroriexists throws an exception if data already exists.
+- ignore slilently ignore thsi operation if data already exists
+
+In LDP , when you create a CDC flow with operations like APPLY AS DELETE and sequence BY , the system needs a way to manage incremental updates, including insertions, updates and deletiobs, while maintining the correct oder of events based on sequence keys. The ___apply_changes_storage_users_target table ius an internal storage table that keeps track of these canges along with "tombtone" markers fior deleted rows and versioning metadata to ensure that out-of-order or late-arriving events are applied correctly. This internal table ius not meant for direct querying but is essential in maintaing CDC consistency.
+
+the user_target view, on the other hand, is a virtual layer over this internal table that presents the current state of the data as a clean, queryable snapshot . this allows the CDC logic to remain encapsulated and transoarent.
+
+Schedulin clusters to start and stop at specific times is not suported with cluster policies.
+Cluster policies are primarily desinged to enforce consistent configurations, amange libraray installments, conytro costs by setting limits ad defaults on cluste creation.
+
+The total wall-clock duration measures the total time from start to scheduling to the end of query execuion, covering the entire period the query takes to run, including scheduling, optimization and file pruning, and actual execution.
+
+In multi-task job, notifications can be configured at two levels
+Job-levl - trigger only when the entire job succeeds or fails. - Means if an individual task fils but is not retried successfully, no notification is sent until the overall job completes or fails.
+Task-level - trigger for each task event, including failures, or successful completions.
+
+Data that is over partitioned or incorrectly partitioned will suffer greatly. Files cannot be combined r compacted across partitionboundaries, so partitioned small tables increase storage costs ad total number of files to scan . tHis leads to clowdwns for most general queries. such an issue require a full rewrite of all data files to remedy.
+
+For the team of data analysts performing explorarayory analysis, querying and snall datasets and running ython , sql workloads cllaboratively the STANDARD cluster access modeis the most suitable choice. Standard clusters are designed to provide shared access to the cluster resources for general workloads providing cost-effective compute options while isolating users workloads from eah other.
+They efficientkly habdle python aND SQL wokloads and since the project does not incolve secializations like R, MLLIB OR RDD based tasks there is not need for additional capabilities of dedicatd access mode. This mode balanced operational efficiency with cimplicity, making it idel for collaborative but non-specialized analytics tasks.
+
+PyTHON wheel is a binary distribution format for installing custom python code packages on databricks clusters. The wheel is a ZIP-format archive with the .whl extension.
+
+Auto compaction does not support Z-Ordering as z-ordering is significantly more expensive than just compaction.
+
+Delta lake automatically captures statistics in the transactionlog for the ead added adata file f the table. By default data lakr collects the statistics on teh first 32 columns of each table. Nested fields count when determinig the first 32 coulumns.
+
+In the event log table for LDP pipelines the data qulity results are logged under events of type 'flow_progress' and stored inside the details column in a nested JSON structure
+details:flow_progress - contains information about a pipeline's execution progress
+details:flow_progress.data_quality:ontains the data wuality results (expectations, dropped _recors etc..)
+details:flow_progress:data_quality.expectations- specifically holds the expectatiuons results.
+
+In either case, deep or shallow cloning, data modifications applied to the cloned versions of the table will be tracked and stored separately from the source , so it will not e=affect the source table.
+
+Stream-static joins take advantage of Delta lake guarantee that the latest version of the staticdelta table is returned each-time t queried in a join operation with data stream.
+
+Integration testing is an approach to testing the interaction between subsystem of an applications it tests thatthe sofware modules are integrated logically and tested as a group.
+
+running an existing job via the endpoint '/api/2.2/jobs/run-now' returns the run_of the triggerd run . Tgis represnts the globally unique identifier for this newly triggered run.
+
+Auto optimize is a functionalitu that allows delta lake to automaticallyt compact small files of delta tables. This can eb achieved during individual writes to the delta table.
+Auto optimize constsi of 2 complemnetay operations
+- optimize writes with this feature enabled, atbricks attempts to write out 128 MB files for each table partition.
+Auto compaction - this will check after an individual write, if files can further be compactd . if yes, it runs an OPTIMIZE job with 128 MB file sizes (instead of teh 1GB file size used in the standard OPTIMIZE)
