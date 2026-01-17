@@ -3142,5 +3142,101 @@ In order to ingest input json data into a taregt Delta table , we use Autoloader
 	If you want the data ingestion to happen incrementally in near real-time, you can use the default trigger methid which is trigger (processingTime = "500ms"). this allows processing of data in micro batchs at a fized interval of half a second.
 
 If a task fails durng a job run, only the dependent tasks, if any wull be skipped . paralel tasks will run and complete.
-The failure of a tas will always be partial, which means that the operations in the notebool before the code failure will be successfully run and committed, whicle the operations after the code failue will be skipped
+The failure of a tas will always be partial, which means that the operations in the notebool before the code failure will be successfully run and committed, whicle the operations after the code failue will be skipped.
+
+
+Databricks recprds change data fro UPDATE, DELETE, and MERGE operations in the _change_data folder undr the table directory.
+	The files in the _change_data folder follow the retention policy of the table. Therefore, if you run the VACUUM command, change data feed data is also deleted.
+
+Reading table's  changes cpatured by CDF , using spark.read means that you are reading them as a static source. So each time your run the query all tables changes (starting from specific Version) will be read .
+The entire history o the updated records will be append to the target table at each execution, which leads to duplicate entires as in the code.
+
+The pormissions hierarchies CAN VIEW -> CAN RUN -> CAN MANAGE
+
+change Data Feed, or CDF is an new feature built into Delta Lake that allows it to automatically generate CDC feeds about Delta LAke tables.
+CDF recprds row-level changed for all the data written into Delta table. This includes the row data along with metadata inclusing whether the specified row was inserted, deleted or updated.
+
+Dynamic file pruning in Apache spark is an optilization techniques that skips reading irrelevant data files during query execution by leveraging runtime filter information, which allows spark to avaoid scanning files that do not macth the query predicates, thereby improving performance and reducing I/O.
+
+Databricks records change data for UPDATE, DELETE and MERGE operations in the _change_data folder under the table directory.
+	The files in the _change_data folder follow the retention policy of the table. Therefore, if you run the VACUUM command, change data feed data is also deleted.
+
+pyspark.sql.functions.broadcast function marks a DataFrame as small enough for use in broadcast joins.
+
+In Delta Lake, deletion vectors are a performance optimization feature introduced to handle row-level deletes and updates efficiently.
+	Instead of rewriting entire parquet files when some rows are deleted or updated, deletion vectors keep track of which rows in a data file are logically deleted.
+	This tracing is done through metadata structures stored separately from the data files.
+	Queries automatically skip these deleted rows, even though the original Parquet files remain unchanged.
+This significantly improves performance for frequent DELETE, UPDATE, and MERGE operations.
+
+GRANT ALL PRIVILEGES ON TABLE employees TO hr_team
+	select, creat, modify, usage, read_metadata.
+
+SENDING GET requests to endpoint '/api/2.2/jobs/runs/get' allows us to retreve the metadata of a job run using its run_id.
+
+data that is over-partitioned will suffer greatly. Files cannot be combined or compacted across partition boundaries, so partitioned small tables increases storage costs and total number of files to scan. This leads to slowdown for most general queries.
+	If most partitions in a table have less than 1GB of data , the table is likely over-partitioned.
+
+Usually we use spark.sql() function to run SQL queries. However, in this particular case, the spark session can not be accessed from within the microbatch process. Instead we can access the local spark session from the microbatch dataframe
+	recent ersion cluster >10.5 microBatchDF.sparkSession.sql(sql_query)
+
+Table partitioning helps improve security. You can separate sensitive and nonsensitive data into different partitions and apply different security controls to the sensitive data.
+
+The expected output has a unique tier number to each employee within their department based on salary, evern when the multiple employees have the same salary. TO achieve this, the data engineer should use the row_number() function.
+	The rinw_number() generates a sequential number for each row within the specified window. guaranteeing uniquemess regardless of the duplicate salary values.
+	window_spec = Window.partitionBy("deparment").orderBy(df["salary"].desc())
+	Using row_number().over(window_spec) will assign 1,2,3,... to employees in order of their salaries within each departmnet, exactly ,matching the expected output.
+Functions like rank() or dense_rank() would assign teh same number to employees with identical saaries, percent_rank() would produce fractional values between 0 and 1.
+
+Apache Arrow provides an effieicnt columnar in-memory data format that allows Saprk to transfer data between the JVM and Python proceses withot serialization overhead. This significantly speeds up the data processing compared to standard row-baed formats.
+
+if a task fails during a job run, all dependent tasks will be skipped.
+	The failure of a task will always be partial, which means that the operations in the notebook before the code failure will be succeessfully run and committed, while the operations after the code failure will be skipped.
+
+In stream-static join, the streaming portion of this join drives this join process. So, only new data appearing on the streaming side of the join will trigger the processing. While, adding new records into the staic table will not automatically trigger updates to the results of the stream-static join.
+
+Delta Lake's default transaction log retention period is 30 days, which determines how long historical data is kept available for time travel before being permanently deleted. To match this retention period for the deleted files, we need to alter the table to set the table property.
+	ALTER TABLE orders SET TBLPROPERTIES ('delta.deletedFileRetentionDuration' = "interval 30 days")
+
+With shallow clone, you create a copy of a table by just sopying the Delta transaction logs.
+	tHat means that there is no data moving during shalloe cloning.
+	Running vacuum command on the source table may purge data files referenced in the transaction log of the clone. in this case you will get an error when querying the clone indicating that some data files are no longer present.
+
+Schema evolution is a feature that allows adding new detected fields to the table. Its activated by adding 
+	.option('mergeSchema', 'true') to your .write or .writeStream Spark command.
+
+dlt.expect_or_warn is not supported expectation function in the lakeflow declarative pipelines
+supported are :
+	dlt.expect - it writes invalid rows to the target (warnibg semantics)
+	dlt.expect_or_drop - drop invalid rows before writing to the target.
+	dlt.expect_or_fail - fails the update if violation occurs.
+
+You can configure two types of cluster permissions
+1. Allow cluster creation - entitlement controls your ability to create clusters.
+2. Cluster-level permissions control your ability to use and modify a soecific cluster. there are four permission levels for a cluster.
+
+Ability                    NO PERMISSIONS 			CAN ATATCH TO 			CAN RESTART 			CAN MANAGE
+Attach notebbok to compute                             *						*						*
+View spark UI 										   *						*						*
+View compute metrics								   *						*						*
+view driver logs																						*
+terminate compute																*						*
+start or restart compute														*					    *
+edit compute																							*
+atatch library to compute																				*	
+resize compute																							*
+modify permissions																						*
+
+The method that does not allow data engineers to create a multi-task in Databricks is LDP. LDP are meant for definin transformation logic in a declarative way (SQL/.Python) and can function as a single task within a job rather than creating multi-task jobs themselves.
+
+While the Workspace UI and REST API let you define jobs with multiple tasks, and Databricks Asset Bundles can package and deploy multi-task job definitions. 
+
+MERGE operation can not be prformed if multiple source rows matched and attempted to modify the same target row in teh table. the result may be ambiguous as it is unclear which source row ahould be used to update or delete the matching target row.
+	For such an issue, you need to preprocess the source table to eliminate the possibility of multipke matches.
+
+Cloudflare R2 removed egress costs, which helps significantly lower expenses when sharing data across cloud environments.
+
+By default, records that violate the constraint will still be written to the target table and reported as invalid in the pipelines metrics. Therefore, the constarint can simply e define as
+	CONSTRAINT valid_id EXPECT (id IS NOT NULL) without any ON VIOLATION clause 
+	
  ******************  
