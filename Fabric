@@ -1,1 +1,5 @@
 
+One Lake & Lakehouses
+======================
+One lake ios basically like a managed data lake that is storing all our data. It is just an invisible layer taht is just acting as this managhed data lake.
+It is not only storing all of the data within our account, but it is also creating
