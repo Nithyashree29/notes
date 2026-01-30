@@ -11,3 +11,23 @@ success
 Data Warehouse -> Dimensional Data Model -> Facts and Dimensions
 Due to raise in data -> 3v's -> data has structured, unstructured, Semi-structured which doesn't apply to Data Warehouse.
 So that is when we have the DATA LAKE.
+
+When we just add Delta lake on top of teh Data Lake it adds adat warehousing caoabilities.
+what we do is - we create a something called delta log, it adds data warehousing stuff like Asset properties, data versioning, time travel, rollback capabilities, ACID 
+
+MEDALLION ARCHITECTURE
+1
+Bronze -> Silver -> Gold
+
+
+
+
+
+
+
+
+
+
+
+
+
