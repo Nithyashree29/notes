@@ -41,9 +41,20 @@ Note - Blob Storage - actually stores your data in this form like structured, se
 Azure Data Factory - Allows you to perform ETL/ELT with code or no code.
                      Data Flows
                      Monitoring/ Triggers
+Azure Databricks - I will just take care of clusters.
+Azure Synanpse Analytics - Basically Azure Synapse Analytics is the current data engineering and current data warehousing solution.
+Two pools - Dedicated SQL POOL -  Yu data will be stored in the traditional databases. But processing data in distributed manner, Cost is high.
+            Serverless SQL POOL - Don not need to worry about the servers.Automatic scaling and it will not actually store your data in the serverlessss. It will follow thw conceot of lakehouse in which your data will be stored in the data lake, and it will just add Delta Lake capabilities on top of it and it will just create the external tables for you.
 
+In fabric we just have serverless SQL pool and has been renamed as Fabric Data Warehouse and Fabric Data Warehouse has all capabilities of dedicated SQL pool.aLSO called Lake centric  data wraehouse.
 
+RBAC - Row based access control.
+Azure Event Hubs - ingest the data and temporarily store this data into the Azure Event Hubs in the form of events. Similar to kafka.
+Azure Stream Analytics - It will prcess the data and it can store the data anywhere.
 
+FABRIC
+=======
+Why? - It will simply integrate the catagories.
 
 
 
