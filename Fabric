@@ -2,4 +2,7 @@
 One Lake & Lakehouses
 ======================
 One lake ios basically like a managed data lake that is storing all our data. It is just an invisible layer taht is just acting as this managhed data lake.
-It is not only storing all of the data within our account, but it is also creating
+It is not only storing all of the data within our account, but it is also creating or we are also able to create so-called shortcuts to external files. ( so without moving the data, without creating complex data pipelines, the data through those shortcuts appeares to be in out one lake)
+
+LakeHouse - They are like a mixture of data lakes, which is more flexible, and then also the more performance oriented and more analytical solution of data warehouses.
+Lakehouse is an item created within our workspace.
