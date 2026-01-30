@@ -21,8 +21,26 @@ Bronze -> Silver -> Gold
 
 Delta Lake
 ===========
+When we work with Big data, it is always suggested that we should use columnar row format.
+Note - in parquet file format schema is stored at the bottom/footer of the file. So in delta format it just utilizes the transaction logs.
+And because of this delta log, we can perform all the data warehousing capabilities.
+ACID transactions, Data Versioning, Timetravel, Indexing.
 
+Azure - All services that we use from Azure are called resources.
+Whatever user managemnet service principal and all the accountas that we be creating is actually managed at Microsoft entry ID level.(renamed from Azure ACtive firectory).
 
+Microsoft Entra Id - place a key role in performing all the Admin Activities in both Azure and FABRIC.
+==================
+1. users - example access to one obj.
+2. Service groups - example haing access to multiple objects by adding the users.
+3. Service principle - Its like having credentials, which is treated as a dummy account.
+
+ADLS GEN2 - Data Lake in Azure.
+Note - Blob Storage - actually stores your data in this form like structured, semi-structured and unstructured format and when we just create Data Lake on top of blob storage, we actually enable the hierarchical namespace.
+
+Azure Data Factory - Allows you to perform ETL/ELT with code or no code.
+                     Data Flows
+                     Monitoring/ Triggers
 
 
 
