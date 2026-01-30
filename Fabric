@@ -6,3 +6,8 @@ It is not only storing all of the data within our account, but it is also creati
 
 LakeHouse - They are like a mixture of data lakes, which is more flexible, and then also the more performance oriented and more analytical solution of data warehouses.
 Lakehouse is an item created within our workspace.
+success
+
+Data Warehouse -> Dimensional Data Model -> Facts and Dimensions
+Due to raise in data -> 3v's -> data has structured, unstructured, Semi-structured which doesn't apply to Data Warehouse.
+So that is when we have the DATA LAKE.
