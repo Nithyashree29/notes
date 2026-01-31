@@ -87,7 +87,7 @@ View and read content of KQL databases,                   *              *      
 KQL query-sets, and real-time dashboards
 Connect to SQL analytics endpoint of Lakehouse or the Warehouse *        *                *                   *
 
-
+Things in fileexplore of the one lake is available in the fabric aswell.
 
 
 
