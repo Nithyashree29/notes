@@ -54,7 +54,9 @@ Azure Stream Analytics - It will prcess the data and it can store the data anywh
 
 FABRIC
 =======
-Why? - It will simply integrate the catagories. T integrate the services, each xatagory , each person efficiently.
+Why? - It will simply integrate the catagories. T integrate the services, each xatagory , each person efficiently.\
+Microsoft fabric is an end-to-end unified data platform. Which has its backbone OneLake (Which is imprvised version of Dataa LaKE)
+
 
 
 
