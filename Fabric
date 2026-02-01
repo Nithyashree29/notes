@@ -95,6 +95,19 @@ Dtaa ingestion in Fabric
 2. Data Factory
 3. Spark , Spark Notebook
 
+Data flows iN FABRIC - is also a data ingestion tool. So we can simply say data flow is typically and ETL framework in which we can extract the data as well, we can transform and load to your destinations.
+Instead of using it as an extraction tool, we can use it as a transformation tool and that is the core functionality of the data flows.
+1. If you want to ingest medium sized data, but not very big, then yes we can use data flows.
+2. Transfomation capabilities.
+
+1. Data factory - use for very huge big data.
+2. Embed Data flow.
+
+Kinds of data flows
+1. Gen 1 - outdated
+2. Gen 2 (Power query editor UT)
+
+
 
 
 
