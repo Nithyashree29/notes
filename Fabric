@@ -89,6 +89,13 @@ Connect to SQL analytics endpoint of Lakehouse or the Warehouse *        *      
 
 Things in fileexplore of the one lake is available in the fabric aswell.
 
+Dtaa ingestion in Fabric
+=========================
+1. Data flow gen2
+2. Data Factory
+3. Spark , Spark Notebook
+
+
 
 
 
