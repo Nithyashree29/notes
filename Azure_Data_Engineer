@@ -2,9 +2,46 @@ Cloud -> Cloud is central location to store Data.
 Cloud Computing -> Providing on demand computng resources.
 Types of Cloud Services
 =======================
+See - Types Of cloud services in readme.md file
 
-                                                  
-Responsibility always retained by teh customer  
+Data Centers
+==============
+Region -> Zones -> DataCenters
+
+Data Availability Zones -One zone can be available to the rother zones.
+  If the whole zone is affected then we can use Zone B.
+  If the whole region is affected we have something called Region pairs.(Simply have the replica of your data , replica of the resources in the other regions aswell)
+That is why availability up tp 99.99999%
+
+Policies in  sure to make sure that the redundance is there
+=============================================================
+LRS - Locally Redundant Storage, Multiple copies within the datacenters. It basically stores the servers in the racks.
+  Availability Sets OR LRS
+
+ZRS - Zone Redundant Storage, just want to access data within the zone
+  Whole datacenter os not working so it can simply gopt ot the next zone.(Typical example when there is only one copy for each datacenters and if that datacenter goes down it will contact with other datacenters in zone2)
+
+GRS - little bit expense than LRS, GRS creats LRS within the region , 3 copies within the same region in the same datacenter, but that will be connected to the different region and three copies will be there in the other datacenters aswell. No entry of zone just one region one datacenter connected to second datacenter second region.
+
+GZRS - Geo Zone Redundant Storage, It will create three copies of the data and it will distribute that particular object within in the datacenter but in other region it will distrribute your data and it will create theree copies  and distribute among three different zones.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
