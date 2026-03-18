@@ -25,7 +25,12 @@ GRS - little bit expense than LRS, GRS creats LRS within the region , 3 copies w
 
 GZRS - Geo Zone Redundant Storage, It will create three copies of the data and it will distribute that particular object within in the datacenter but in other region it will distrribute your data and it will create theree copies  and distribute among three different zones.
 
-
+ Nithya
+Resources - Its just a services you use in Azure.
+Tenant -> It a kind of owner of that particular platform
+Subcriptions -> MMulti bills for different departments.
+Resource Group -> Is just a folder for your resources.
+Resources -> are your services.
 
 
 
