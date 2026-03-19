@@ -1,1 +1,10 @@
+AWS services are 
+  EMR - Elastic Mapreduce, (Similar to HD insights)
+  Redshift - Data Warehouse, serverful (similar to Azure synapse Serverfull)
+  Athena - To read data from S3, serverless, (SImilar to Azure synapse serverless)
+  Glue - Catalog (which hold metadata), Glue Crawler (infering), ETL capability. (Similar to ADF)
+  S3 - Storage service (Similar to Azure Blob, ADLS gen2)
+  Lambda - serverles compute (Azure Functions)
+
+
 
