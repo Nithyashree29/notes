@@ -45,6 +45,21 @@ CREATE TABLE sales (
   cust_name VARCHAR(20)
 )
 
+Azure Cosmos DB - Mianly for semi-structured data. Azure Cosmos DB is a fully ,Managed NoSQL amd relational database service for building scalable, high performance applications.
+  Azure cosmos DB for NOsql - Key value pair
+  Aure Cosmos for MOngoDB - key and value as a JSON.
+  etc..
+Usally highly used by software people and data engineers and HTAP - Hybrid Transactional Analytical Processing and we as a data engoineers ise COSMOS DB as our source , we process the data and we just load this data to data warehouse.
+
+Azure Storage Account -
+  Data Lake - built on top of Blob storage which is Azure Blob Storage. if we enable Hierarchical namespace then we it wll create  Azure Data Lake.
+
+Access Tiers
+Hot - Optimized for frequently accessed data and everyday usage scenarious.
+Cool - Optimized for infrequently accessed data and backup scenarios.
+Cold - Optimized for rerely accessed data and backup scenarios.
+
+
 
 
 
