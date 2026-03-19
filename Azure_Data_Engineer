@@ -38,6 +38,13 @@ Azure SQL DB -
   SQL virtual machines(a virtual machine will be created and it will install  Azure SQLon it ) Its is best for migrations  and applications require OS level access. It is lift and shift ready.It is like IAAS.
  You can use the query editor or login as a Mircrosoft entra authentication.
 
+CREATE TABLE sales (   
+  id INT,
+  cust_name INT,
+  sale_amt INT,
+  cust_name VARCHAR(20)
+)
+
 
 
 
