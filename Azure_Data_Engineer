@@ -59,8 +59,9 @@ Hot - Optimized for frequently accessed data and everyday usage scenarious.
 Cool - Optimized for infrequently accessed data and backup scenarios.
 Cold - Optimized for rerely accessed data and backup scenarios.
 
+Once you create storage account you have containers (which is your data lake), Fileshares, Queues, Tables)
 
-
+Azure Data Factory - 
 
 
 
