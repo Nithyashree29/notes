@@ -61,7 +61,9 @@ Cold - Optimized for rerely accessed data and backup scenarios.
 
 Once you create storage account you have containers (which is your data lake), Fileshares, Queues, Tables)
 
-Azure Data Factory - 
+Azure Data Factory - Its a cloud ETL/ELT tool.
+  Source -> ADF -> Destinationtake you forward
+
 
 
 
