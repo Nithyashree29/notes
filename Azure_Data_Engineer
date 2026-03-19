@@ -36,8 +36,8 @@ Azure SQL DB -
   SQL databases - SQL db for future usecases , It is just for the fresh applications.
   SQL managed instances, -  99 %  OS level access . Still best for most migrations to the cloud , because you dont have to manage the infrastructure and its like PAAS
   SQL virtual machines(a virtual machine will be created and it will install  Azure SQLon it ) Its is best for migrations  and applications require OS level access. It is lift and shift ready.It is like IAAS.
+ You can use the query editor or login as a Mircrosoft entra authentication.
 
-    
 
 
 
