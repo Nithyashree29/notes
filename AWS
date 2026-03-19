@@ -6,5 +6,7 @@ AWS services are
   S3 - Storage service (Similar to Azure Blob, ADLS gen2)
   Lambda - serverles compute (Azure Functions)
 
-
+ 
+Athena - you want to analyze something in this 5TB data like once in every week, the performance is not a key thing.
+Redshift - You have to mve data from s3 to redsfict and you would analyze the data and performance is a key factor and lot of workloads to run throughout the data.
 
