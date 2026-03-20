@@ -28,7 +28,8 @@ Glue Crawler tries to crawl over s3 data and detect/ infer the schema.
   Other engines have been like - 'apache spark engine' for running complex jobs/workloads and no need of SQL style.
 By default it till be trino and you need to create workgroup and there you can select highly scalable serverless spark engine and that creats or you can create new notebook.
 In Athena we have DPU - data processing unit, it charges for 1DPU is $.35
-  
+
+EC2 - Virtual machine on amazon cloud. Elastic cloud compute
 
 
 
