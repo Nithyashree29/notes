@@ -22,8 +22,13 @@ Notes
 
 Infering Schema Using Glue Crawler
 ==================================
+Glue Crawler tries to crawl over s3 data and detect/ infer the schema.
 
+  Athena query engine - Trino SQL engine for running the table created in Athena and it gets the resources from shared pool.
+  Other engines have been like - 'apache spark engine' for running complex jobs/workloads and no need of SQL style.
+By default it till be trino and you need to create workgroup and there you can select highly scalable serverless spark engine.
 
+  
 
 
 
