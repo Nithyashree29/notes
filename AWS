@@ -12,4 +12,16 @@ Athena - you want to analyze something in this 5TB data like once in every week,
   It charges $5 per TB scanned.
 Redshift - You have to mve data from s3 to redsfict and you would analyze the data and performance is a key factor and lot of workloads to run throughout the data.
 
+Notes 
+======
+1. To Improve performance we can use some comperssion technique like snappy, gzip..
+2. You should use column based file formats (parquet, orc) we can achieve column level pruning.
+3. You can partition your data so that you can get partition pruning. we can achieve row level pruning.
+4. If the data is added  to the folder and the table is unable to fetch the latest data, then you can use "msck repair table 'table_name'" and add relavent information to the metastore.
+5. For the compression the file used run length encoding, dictionary encoding which reduces the size significantly.
+
+
+
+
+
 
