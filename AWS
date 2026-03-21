@@ -38,7 +38,15 @@ EC2 - Virtual machine on amazon cloud. Elastic cloud compute
   Two types of storage - instance storage (atatched to the server)
                          EBS - Elastic block storage (network attached storage)
   Permissions - 4 -> read, 2 -> write, 1 -> execute, chmod 777 which you were using in your fav was all permissions 
+  public IP - this is for communication within the aws network.
+  Private IP - for the external world.
 
+  Types of EC2 insances 
+                    General purpose (M)
+                    compute optimized (C)
+                    memory optimized (R)
+
+  
 
 
 
