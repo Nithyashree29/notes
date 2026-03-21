@@ -30,8 +30,11 @@ By default it till be trino and you need to create workgroup and there you can s
 In Athena we have DPU - data processing unit, it charges for 1DPU is $.35
 
 EC2 - Virtual machine on amazon cloud. Elastic cloud compute
+A smaller machines which are isolated. Each mahine with its own operating system.
 
-
+RSA  (Rivest, Shamir, and Adleman) Key pair - Prvate and public keyy.
+  Private key is on VM and its like a lock, and public key resides on your local machine.
+ 
 
 
 
