@@ -51,7 +51,10 @@ EC2 - Virtual machine on amazon cloud. Elastic cloud compute
       AWS command line interface
       AWS cloudformation (Intra as code) JSON or YAML format
   
-                                                                                    
+EMR - Elastic Map Reduce. Managed big data environment on cloud. Equvalent to Azure - HD insigts, Google Dataproc.
+  EMR on EC2 custers, EMR serverless, EMR studio, EMR on EKS.
+
+
 
 
 
