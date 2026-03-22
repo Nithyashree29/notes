@@ -46,7 +46,15 @@ EC2 - Virtual machine on amazon cloud. Elastic cloud compute
                     compute optimized (C)
                     memory optimized (R)
 
+   Interfaces to manager a ec2 instance
+      Amazon EC2 console
+      AWS command line interface
+      AWS cloudformation (Intra as code) JSON or YAML format
   
+
+\
+
+
 
 
 
