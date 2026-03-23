@@ -1,3 +1,35 @@
+===========================Linkedin Notes ==================================
+
+Schema Evolution & Schema Enforcement in Databricks
+
+Every data pipeline eventually faces the same problem: Data changes, but your table doesn't know that yet.
+
+- A new column appears in the source
+- A field gets renamed
+- A data type shifts
+
+How you handle that moment defines whether your pipeline is brittle or resilient. Delta Lake gives you two tools for this, and understanding when to use each one matters.
+
+Schema Enforcement: This is the default behavior in Databricks. When you try to write data that doesn't match the existing table schema, a new column, a type mismatch or an extra field, Delta Lake rejects the write entirely and throws an error. It protects your table from accidental corruption and silent data quality issues.
+
+Schema Evolution is how you tell Delta Lake to adapt instead of reject. By enabling mergeSchema, you're telling Delta Lake to accept the new structure and update the schema automatically. New columns get added, existing rows receive NULL for those columns, and your old queries keep working without modification. No rewrite, no downtime, no pipeline breakage.
+
+Use Schema Evolution for:
+
+- Ingestion / Bronze layers, where data lands as-is from the source
+- Pipelines consuming REST APIs or event streams that evolve frequently
+- CDC pipelines tracking changes from operational databases
+- Autoloader jobs ingesting files from external providers
+
+Use Schema Enforcement for:
+
+- Silver and Gold layers, where data quality and consistency are non-negotiable
+- Tables consumed by BI tools, dashboards, or ML models
+- Shared tables written by multiple teams or jobs
+- Any table under data governance or compliance requirements
+===========================Linkedin Notes ==================================
+
+
 AWS services are 
   EMR - Elastic Mapreduce, (Similar to HD insights)
   Redshift - Data Warehouse, serverful (similar to Azure synapse Serverfull)
