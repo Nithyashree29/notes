@@ -123,7 +123,11 @@ Using EMR serverless you can either run spark workloads or hive workloads and ea
 AWS Glue  (Azure Data Factoy)
 ========
 AWS glue is a serverless data integration service.
+Crawler - Infers the column names and datatypes.
+Data Catalog - stores db names, tb names etc...
+ETL Capability, via visual interface, script, interactive way (development purpose)
 
+`
  
 
 
