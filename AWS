@@ -86,8 +86,21 @@ EC2 - Virtual machine on amazon cloud. Elastic cloud compute
 EMR - Elastic Map Reduce. Managed big data environment on cloud. Equvalent to Azure - HD insigts, Google Dataproc.
   EMR on EC2 custers, EMR serverless, EMR studio, EMR on EKS.
   EMR cluster includes Hardware, Software
-  
 
+  EMR Node types
+    Primary node (master)
+  hdfs - namenode service (storage)
+  yarn - resource manager (resource management)
+    Core nodes (worker) It is for storage and procesing
+  hdfs - data node service
+  yarn - node managers   
+    Task Node (is only for procesing)              
+
+Note - During creation of EMR instance it might fail because, not all instances are available in all regions or AZ's
+
+Ways to execute the job in EMR 
+
+  
 
 
 
