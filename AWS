@@ -115,8 +115,9 @@ EMR serverless
 ===============
 We do not have to specify the number and size of the resources.. no upfront resources are there.
 you pay based on amount of compute and memory hours.
+Using EMR serverless you can either run spark workloads or hive workloads and each with different application.
+   You have options for jobs 1. default settings for batch jobs only, 2. default settings for interactive workloads, 3. Use custom settings.
 
- 
 
 
 
