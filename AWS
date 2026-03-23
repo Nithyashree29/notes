@@ -119,7 +119,7 @@ Using EMR serverless you can either run spark workloads or hive workloads and ea
    You have options for jobs 1. default settings for batch jobs only, 2. default settings for interactive workloads, 3. Use custom settings.
   it can use instance creation approach, interactive analysis approach, using jupyter notebook.
 
-
+ 
 
 
 
