@@ -61,7 +61,7 @@ Glue Crawler tries to crawl over s3 data and detect/ infer the schema.
 By default it till be trino and you need to create workgroup and there you can select highly scalable serverless spark engine and that creats or you can create new notebook.
 In Athena we have DPU - data processing unit, it charges for 1DPU is $.35
 
-EC2 - Virtual machine on amazon cloud. Elastic cloud compute
+EC2 - Virtual machine on amazon cloud. Elastic cloud compute (Azure VM's)
   A smaller machines which are isolated. Each mahine with its own operating system.
   
   RSA  (Rivest, Shamir, and Adleman) Key pair - Prvate and public keyy.
@@ -111,13 +111,18 @@ transient vs Long Running cluster
 Long running cluster - you have many workloads throughout the day.
 transient cluster - It like temporary cluster and gets terminated after the job finshes.
 
-EMR serverless
+EMR serverless (Azure HDInsight)
 ===============
 We do not have to specify the number and size of the resources.. no upfront resources are there.
 you pay based on amount of compute and memory hours.
 Using EMR serverless you can either run spark workloads or hive workloads and each with different application.
    You have options for jobs 1. default settings for batch jobs only, 2. default settings for interactive workloads, 3. Use custom settings.
   it can use instance creation approach, interactive analysis approach, using jupyter notebook.
+ Yesss
+
+AWS Glue  (Azure Data Factoy)
+========
+AWS glue is a serverless data integration service.
 
  
 
