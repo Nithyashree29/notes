@@ -113,7 +113,10 @@ transient cluster - It like temporary cluster and gets terminated after the job 
 
 EMR serverless
 ===============
+We do not have to specify the number and size of the resources.. no upfront resources are there.
+you pay based on amount of compute and memory hours.
 
+ 
 
 
 
