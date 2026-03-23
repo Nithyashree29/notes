@@ -53,8 +53,8 @@ EC2 - Virtual machine on amazon cloud. Elastic cloud compute
   
 EMR - Elastic Map Reduce. Managed big data environment on cloud. Equvalent to Azure - HD insigts, Google Dataproc.
   EMR on EC2 custers, EMR serverless, EMR studio, EMR on EKS.
-
-
+  EMR cluster includes Hardware, Software
+  
 
 
 
