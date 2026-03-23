@@ -99,8 +99,20 @@ EMR - Elastic Map Reduce. Managed big data environment on cloud. Equvalent to Az
 Note - During creation of EMR instance it might fail because, not all instances are available in all regions or AZ's
 
 Ways to execute the job in EMR 
+1. Management Console.
+2. ssh into primary node and manually run a task.
+3. AWS CLI.
+ primary node - master
+ core nodes - runs tasks and store daa in hdfs, ephimeral
+ task nodes - runs tasks but does not store any data, optional.
 
-  
+transient vs Long Running cluster
+=================================
+Long running cluster - you have many workloads throughout the day.
+transient cluster - It like temporary cluster and gets terminated after the job finshes.
+
+EMR serverless
+===============
 
 
 
