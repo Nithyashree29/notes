@@ -69,6 +69,22 @@ Azure Data Factory - Its a cloud ETL/ELT tool.
 Componenets of ADF - Home, Author, Monitor, Manage (to establish connections, source control, Author, security..).
 Once you create the linked service connection you have to use activities like copy activity , get metadata activity etc...
   COPY ACTIVITY - in majority of the solutions we migrate the data from one plavce to another and this activity copies data from source to destination.
+  METADATA ACTIVITY - for some patterns...
+      Once you create the dataset in the METADATA ACTIVITY in settings sections, under Field list  -> child items -> it gives you array of files.
+      ["childitems" : [
+                {
+                    "name" : "File1.csv",
+                    "type" : "File"
+                 },
+                 {
+                    "name" : "File2.csv",
+                    "type" : "File"
+                 }
+          ],
+          "effectiveintegrationRuntime" : "AutoResolveIntegrationRuntime (East US)",
+          ......]
+
+
 
 Author Tab - components like pipelines, Change data capture, datasets, data flows, power query
 
