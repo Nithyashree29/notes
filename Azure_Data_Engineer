@@ -83,8 +83,10 @@ Once you create the linked service connection you have to use activities like co
           ],
           "effectiveintegrationRuntime" : "AutoResolveIntegrationRuntime (East US)",
           ......]
-
-
+  FOR EACH ACTIVITY - to iterate through the array/loop.
+      dynamic content -> under activity outputs select Get Metadata -> @activity('Get Metadata').output.childItems
+  IF CONDITION ACTIVITY - once you have the array of ouput from GETMETADATA ACTIVITY you can use conditions like ex file name starts with FACT.
+      Inside FOR EACH ACTIVITY add IF CONDITION ACTIVITY -> add dynamic content -> ForEachCSV -> @startswith(item().name, 'Fact')  -> then you can use true to copy data and false if no match etc...
 
 Author Tab - components like pipelines, Change data capture, datasets, data flows, power query
 
