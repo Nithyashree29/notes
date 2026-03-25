@@ -57,12 +57,77 @@ Azure Storage Account -
 Access Tiers
 Hot - Optimized for frequently accessed data and everyday usage scenarious.
 Cool - Optimized for infrequently accessed data and backup scenarios.
-Cold - Optimized for rerely accessed data and backup scenarios.
+Cold - Optimized for rarely accessed data and backup scenarios.
 
 Once you create storage account you have containers (which is your data lake), Fileshares, Queues, Tables)
 
 Azure Data Factory - Its a cloud ETL/ELT tool.
-  Source -> ADF -> Destinationtake you forward
+  Source -> ADF -> Destination, extract and load part 
+  Transformations can be done using DATAFLOWS which are the spark clusters.
+
+Note - All the storage accounts are unique throught the azure account.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
