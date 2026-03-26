@@ -127,6 +127,15 @@ Crawler - Infers the column names and datatypes.
 Data Catalog - stores db names, tb names etc...
 ETL Capability, via visual interface, script, interactive way (development purpose)
 
+GLUE ETL Jobs
+==============
+1. Crawler
+2. Data Caatalog
+3. ETL jobs (AWS Glue Studio) -> visual ETL, Notebook interactive way, Script editor.
+
+
+
+    
 
  
 
