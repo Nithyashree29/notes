@@ -87,7 +87,8 @@ Once you create the linked service connection you have to use activities like co
       dynamic content -> under activity outputs select Get Metadata -> @activity('Get Metadata').output.childItems
   IF CONDITION ACTIVITY - once you have the array of ouput from GETMETADATA ACTIVITY you can use conditions like ex file name starts with FACT.
       Inside FOR EACH ACTIVITY add IF CONDITION ACTIVITY -> add dynamic content -> ForEachCSV -> @startswith(item().name, 'Fact')  -> then you can use true to copy data and false if no match etc...
-
+  Inside the if consition we can create parameterized source, COPY ACTIVITY -. under the destination path provide the path and enter the dynamicallythe file name -> advanced -> open this dataset -> create parameter -> p_filename, connection -> under filepath -> add dynamic content -> p_file_name (@dataset().p_file_name
+Come back to the COPY ACTIVITY -> ypu can see the dataset properties with NAME as p_file_name and provide VALUE as add dynamic content -> @item().name , The add sink.
 Author Tab - components like pipelines, Change data capture, datasets, data flows, power query
 
 
