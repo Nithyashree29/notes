@@ -92,11 +92,7 @@ Once you create the linked service connection you have to use activities like co
 Come back to the COPY ACTIVITY -> ypu can see the dataset properties with NAME as p_file_name and provide VALUE as add dynamic content -> @item().name , The add sink.
  DATA FLOW - you can do some transformations on the data. and in settings you can attach your data flow , you can attach the above out put from COPY ACTIVITY as source.
   In DATA FLOW you can enable the DTAA FLOW DEBUG cluster, once the schema is displayed you can edit the schema , its just like inferschema in spark. offcourse it spark in the backend.
-    Here you can again click on "+" and perform your transformation slike  select, filter, comditional split, sink ...
-
-
-
-
+    Here you can again click on "+" and perform your transformation slike  select, filter, comditional split, sink ..
 
 Note -   
     All the storage accounts are unique throught the azure account.
@@ -104,7 +100,20 @@ Note -
     Identity & Access → Entra ID + Azure RBAC (≈ AWS IAM)
     Linked Service → A connection definition to external resources (≈ AWS Glue connections or similar)
 
-Data Flows - 
+Triggers 
+=========
+1. Schedule - Time based
+2. Tumbling - Time based but can also run pipelie using past intervals as well.
+3. Storage events
+4. Custom events
+
+SET VARIABLE ACTIVITY - If you want to store some value in a variable anything basically.
+  o/p from GET META DATA ACTIVITY -> in blank canvas -> add variable "var_fileNames" -> type array  -> SET VARABLE ACTIVITY -> settings -> for name drop down select "var_fileNames" and value -> @activity('Get Metadata').output.childnames
+Note - Two Types of Variable
+1. Pipeline Variable - It will return value in this particular variable/output.
+2. Pipeline return value - Can use the output of this pipeline in the other pipeline.
+
+STORAGE EVENTS TRIGGER - As soon as the files are dropped in the destinations pipeline shoulfd trigger.
 
 
 
