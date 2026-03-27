@@ -113,9 +113,11 @@ Note - Two Types of Variable
 1. Pipeline Variable - It will return value in this particular variable/output.
 2. Pipeline return value - Can use the output of this pipeline in the other pipeline.
 
-STORAGE EVENTS TRIGGER - As soon as the files are dropped in the destinations pipeline shoulfd trigger.
+STORAGE EVENTS TRIGGER - As soon as the files are dropped in the destinations pipeline shoulfd trigger. And starts and stops pipleine automatically based on file adding to the container.
+  destination -> COPY ACTIVITY -> source 
+Note - to use such triggers you can register it as "MicrosoftEventGrid"
 
-
+EXECUTE PIPELINE ACTIVITY - Attaching multiple pipelines 
 
 
 
