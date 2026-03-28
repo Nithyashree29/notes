@@ -143,7 +143,14 @@ How integration run time works when you create it -
 as a pipeline parameter and now in the FOREACH ACTIVITY add the dynamic content under items @pipeline().parameters.files.
     and bring your copy activity inside the FOR EACH ACTIVITY and under your "p_file_name" give dymic @input().file_name under source and same in sink aswell @item().file_name.
     11. And in te sink too you shpuld add the paraemter NAME -> p_file_name and change the file path too dynamic.n 
-    
+    12. you can run either in sequential or parallel (multi threading).
+    13. In the copy activity you can give the mapping if needed or can add dynamic mapping but avoid for large files okay.
+      Note - you can creae a pipeline parameters based no of mappings and then dd the json mapping may be for your POC.
+      And once you have the json added as a pipleine parameter then in your COPY ACTIVITY under MAPPING you can add IF condition  @if(equals(item().file_name, 'DimPassenger.csv'),pipeline().parameters.p_mapping_passenger, 
+            if(equals(item().file_name, 'DimAirline.csv'),pipeline().parameters.p_mapping_airline,
+            pipeline().parameters.p_mapping_flight))
+
+
     
 
   
