@@ -124,8 +124,13 @@ How integration run time works when you create it -
     2. In the machine where you have the data, you download the application called integration runtime.
     3. Register that application with that key.
     4. Now this integration run time knows the other IRT which is on Azure that you are actually hosting this integration runtime on this particular machine.
-
-
+    5. Once the Integration runtime is up and running , will create the linked service with the on-prem.
+        linkedservices  -> filesystem -> name for the linked service -> pic the ITR which you created self hosted -> host (since you are uisng local system you dont have to provide the servcer details bacuase the ITR is also installed on the same manchine but in real world scenarios you have to provide the hosted drive details -> give microsoft username and microsoft password and computers email and password.
+    6. In case of error while test connection -> when ever you create the self integration runtime it by default enables the file validation and you need to diable it. Run as admin in power shell.
+      cd "C:\Program Files\Microsoft Integration Runtime\5.0\shared\"  
+          .\dmgcmd.exe -DisableLocalFolderPathValidation
+    7. Create the linked srvice for the destination.
+    8. pipeline -> COPY ACTIVITY -> SOURCE -> add dataset (filesystem -> format -> add your linked service -> it will preview the files there because you ahve attached the linked service created ) -> etc.. -> add the sink babe.
 
 
 
