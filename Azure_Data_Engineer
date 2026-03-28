@@ -99,6 +99,8 @@ Note -
     Entra ID in Azure is a IAM in AAWS
     Identity & Access → Entra ID + Azure RBAC (≈ AWS IAM)
     Linked Service → A connection definition to external resources (≈ AWS Glue connections or similar)
+    validate tab -> to check if any bugs or not.
+    Debug tab -> Debug is like running the pipeline.
 
 Triggers 
 =========
@@ -131,8 +133,18 @@ How integration run time works when you create it -
           .\dmgcmd.exe -DisableLocalFolderPathValidation
     7. Create the linked srvice for the destination.
     8. pipeline -> COPY ACTIVITY -> SOURCE -> add dataset (filesystem -> format -> add your linked service -> it will preview the files there because you ahve attached the linked service created ) -> etc.. -> add the sink babe.
-
-
+    Note - make sure to ahve the Java Runtime env when ever you want the data to be in parquet or ORC fileformat. (Which usally networking team will take care).
+    9. Here for copying files you dont have to hardcide it you can loop over -> while creating dataset -> advanced -> open dataset -> parameters -> name p_file_name , -> connection tab -> add dynamic content -> @dataset().p_file_name.
+    10. So for the dynamic parameter you shpuld use GET METADATA ACTIVITY or can use the for each loop with hardcoded value  [
+        {"file_name" : "DimPassenger.csv"},
+        {"file_name" : "DimAirline.csv"},
+        {"file_name" : "DimFlight.csv"}
+       ]
+as a pipeline parameter and now in the FOREACH ACTIVITY add the dynamic content under items @pipeline().parameters.files.
+    and bring your copy activity inside the FOR EACH ACTIVITY and under your "p_file_name" give dymic @input().file_name under source and same in sink aswell @item().file_name.
+    11. And in te sink too you shpuld add the paraemter NAME -> p_file_name and change the file path too dynamic.n 
+    
+    
 
   
 
