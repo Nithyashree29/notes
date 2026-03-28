@@ -119,7 +119,11 @@ Note - to use such triggers you can register it as "MicrosoftEventGrid"
   Integration runtime - Is basically a kind of computation resource for your Azure data factory portal with the help of which migrates the data, it transforms the data , it executes the activities. So for all those it needs computation resources to tun like to run the services , data flows, data migration activities so for all those things we need something called as Integration Runtime.
   SELF- HOSTED - In order to migrate the data from On premise to Azure, you need to create owwn Integration runtime and you need to host it to your own local machine, that is why it is called self hosted integration runtime.
   AZURE SSIS - Migrate SSSIS jobs, on premise ETL flows.
-
+How integration run time works when you create it - 
+    1. When you create a IRT you will get a key.
+    2. In the machine where you have the data, you download the application called integration runtime.
+    3. Register that application with that key.
+    4. Now this integration run time knows the other IRT which is on Azure that you are actually hosting this integration runtime on this particular machine.
 
 
 
