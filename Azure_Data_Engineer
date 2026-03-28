@@ -157,7 +157,13 @@ Three SQL services
 2. SQL managed intances - Best for most migrations to the cloud. Lift-and-shify ready.
 3. SQL virtual machines - Best for migartions and aplications requireing OS-level access, Lift-and-shift ready.
 
- 
+Create SQL service -> Create SQL db -> Go-to-ADF -> create linked service for source and destination -> create datasets for both source and sink.
+For the ease of recall..
+Create container in Azure Data Lake and having folder bronze
+F-bronze
+    F-emptyjson
+    F-lastload
+
 
     
 
