@@ -161,8 +161,21 @@ Create SQL service -> Create SQL db -> Go-to-ADF -> create linked service for so
 For the ease of recall..
 Create container in Azure Data Lake and having folder bronze
 F-bronze
-    F-emptyjson
-    F-lastload
+    F-emptyjson -> empty.json
+    F-lastload  -> last_load.json -> hardcode the utc.now() value for ist run
+Steps
+=====
+Lookup ACTIVITY LastLoad-> settings -> select source dataset -> add linked service for data lake -> pic the last load.json file
+connect the Lookup Activity to COPY ACTIVITY -> and in the query expression 
+  "SELECT * FROM dbo.FactBookings WHERE booking_date > '@{activity('<activity LastLoad>').output.firstRow.lastload}'
+    AND booking_date <= '@{activity('LatestLoad').output.firstRow.latestload}'
+  This way you can do initial load for increamental load.
+Lookup ACTIVITY LatestLoad -> 
+  select the sql dataset and in the Query -> "SELECT Max(booking_date) ass latestload FROM dbo.FactBookings"
+Another COPY ACTIVITY connecting previous copy activity  WATERMARK-> add the source and point to the empty.json file -> under the additional column "lastload" -> add dynamic content -> @activity('LatestLoad).output.firstRowlatestload 
+add the sink -> dataset ans ls for the last load.2
+Now ADD EXECUTE PIPELINE ACTIVITY and add onprem and p2 add API ingestion piepeline -> p3 add SQLTO DTABASE 
+Always try to add the parameters from the pipelienandf then inherit to teh child or the other activities.
 
 
     
