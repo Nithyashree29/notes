@@ -150,7 +150,15 @@ as a pipeline parameter and now in the FOREACH ACTIVITY add the dynamic content 
             if(equals(item().file_name, 'DimAirline.csv'),pipeline().parameters.p_mapping_airline,
             pipeline().parameters.p_mapping_flight))
 
-  
+Incremental Data Ingestion using SQL DATABASE
+==============================================
+Three SQL services
+1. SQL databases - For new SQL databases.
+2. SQL managed intances - Best for most migrations to the cloud. Lift-and-shify ready.
+3. SQL virtual machines - Best for migartions and aplications requireing OS-level access, Lift-and-shift ready.
+
+ 
+
     
 
   
