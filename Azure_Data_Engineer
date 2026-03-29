@@ -177,8 +177,24 @@ add the sink -> dataset ans ls for the last load.2
 Now ADD EXECUTE PIPELINE ACTIVITY and add onprem and p2 add API ingestion piepeline -> p3 add SQLTO DTABASE 
 Always try to add the parameters from the pipelienandf then inherit to teh child or the other activities.
 
+Alerts are something which is not reliable for bigger pipelines and not visible in the flows  hence we need a technique which is visible in the pipeline as well.
 
-    
+Logic App - Kind of WEB application that receives the rest API request (HTTP request), its a separate resources.
+  App designer - drag and drop canvas thatw e use to create our logic.
+  Once the resource if deployed, in workflow you create the alerts and then design in this designer.
+  add a triger -> Request type -> when http request is recieved
+                                          |
+                                  add an action - email
+                                  here you can add the information to send in email ex - (use '/') Pipeline :                                                pipelinename, status : status, run_id : run _id , error : error_message 
+    And now in the pipeline you can attach a WEB ACTIVITY and attach your logic app url here and give the body details.
+    dynamic values (as your system variables or activity outputs) - {
+                          "piepeline_name" : "@{pipeline().Pipeline}",
+                          "run_id" : "@{pipeline).RunId}",
+                          "status" : "@{activity('ExecuteIncremental').Status}",
+                          "error" : "@{if(equals(activity('ExecuteIncremental').Status, 'Failed'), 
+                                    string(activity('ExecuteIncremental').error), 'No error') }"
+                        }
+
 
   
 
