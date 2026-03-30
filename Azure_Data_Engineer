@@ -194,7 +194,13 @@ Logic App - Kind of WEB application that receives the rest API request (HTTP req
                           "error" : "@{if(equals(activity('ExecuteIncremental').Status, 'Failed'), 
                                     string(activity('ExecuteIncremental').error), 'No error') }"
                         }
-
+  7
+Note - In data flows you can enable the delta lake properties, ie using ALTER ROW function when you want to write data somehwre eand use UPSERT with your desired condition.
+then add sink and select the sink type 1. Dataset
+2. Inline Dataset - Is basically a data set that is used with open table formats, like Delta lake, Apache Hudi, Apache iceberg and select inlie dataset type as Delta.
+Allow Schema drift -> if new schema arrives in incoming data then it will allow schema drift, adding new columns 
+VAlidate Schem a- if any schema mismatch happens then it fails entire data.
+and in the settings select the sink desination path and hen select the method as UPSERT and the key column as <col_name> if you want any partition pruning you can select that option by adidng your desired columns.
 
   
 
