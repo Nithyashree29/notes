@@ -206,6 +206,9 @@ To publich the data flow -> pipeline -> DATA FLOW ACTIVITY -> attach you DATA FL
   In DEbug we have Use data flow debug session (if is already on then you can use for few debuggings), Use activity runtime (for production use case, or actal pipeline run)
 Remember in the dtaa flow we have debug flow - which is just to see the pipeline it actually doesn't perform any action.
    
+In ADF you can integrate using GIt or Azure Devops too.
+Note ** Anything yiu do in Azure it converts to JSON, for example when you merge the feature branch into main brnach everything will be converted into JSON and here it will be called as ARD template. And this ARD template will be stored in the branch called and ADF PUBLISH and it will be greyed out. And DevOps team will deploy and release pipelines to QA -> PROD.
+
 
 
 
