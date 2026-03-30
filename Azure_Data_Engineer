@@ -213,7 +213,10 @@ Databricks
 1. Control plane - UI, UX, access controls ..
 2. Compute plane - VM's , resources .., Data on your cloud storage.
         
- 
+Azure Databricks
+================
+Storage Account -> Blob, tables, files, Queues.
+
 
   
 
