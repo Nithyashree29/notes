@@ -201,9 +201,11 @@ then add sink and select the sink type 1. Dataset
 Allow Schema drift -> if new schema arrives in incoming data then it will allow schema drift, adding new columns 
 VAlidate Schem a- if any schema mismatch happens then it fails entire data.
 and in the settings select the sink desination path and hen select the method as UPSERT and the key column as <col_name> if you want any partition pruning you can select that option by adidng your desired columns.
-
-  
-
+*** Cannot add sink activity without alter row ***
+To publich the data flow -> pipeline -> DATA FLOW ACTIVITY -> attach you DATA FLOW under settings.
+  In DEbug we have Use data flow debug session (if is already on then you can use for few debuggings), Use activity runtime (for production use case, or actal pipeline run)
+Remember in the dtaa flow we have debug flow - which is just to see the pipeline it actually doesn't perform any action.
+   
 
 
 
