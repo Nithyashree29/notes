@@ -209,7 +209,13 @@ Remember in the dtaa flow we have debug flow - which is just to see the pipeline
 In ADF you can integrate using GIt or Azure Devops too.
 Note ** Anything yiu do in Azure it converts to JSON, for example when you merge the feature branch into main brnach everything will be converted into JSON and here it will be called as ARD template. And this ARD template will be stored in the branch called and ADF PUBLISH and it will be greyed out. And DevOps team will deploy and release pipelines to QA -> PROD.
 
+Databricks 
+1. Control plane - UI, UX, access controls ..
+2. Compute plane - VM's , resources .., Data on your cloud storage.
+        
+ 
 
+  
 
 
 
