@@ -210,14 +210,23 @@ In ADF you can integrate using GIt or Azure Devops too.
 Note ** Anything yiu do in Azure it converts to JSON, for example when you merge the feature branch into main brnach everything will be converted into JSON and here it will be called as ARD template. And this ARD template will be stored in the branch called and ADF PUBLISH and it will be greyed out. And DevOps team will deploy and release pipelines to QA -> PROD.
 
 Databricks 
-1. Control plane - UI, UX, access controls ..
+1. Control plane - UI, UX, access controls .., where we do some configurations for the compute.
 2. Compute plane - VM's , resources .., Data on your cloud storage.
         
 Azure Databricks
 ================
 Storage Account -> Blob, tables, files, Queues.
+Unity Catalog - Is an end-to-end data governance solution for the data domain. Things that can be done via unity catalog are Lineage, Audio, Data Tag.
+Scenario behind the Unity CATALOG - Without unity catalog, if you ahve multiple workspaces and each having its own metastore and manage both the workspaces independently buit with Unity catalog and you ahve one metastore called UNITY METASTORE - It will store all the information for all the workspaces under one hood. 
+Earlier you were able to create one data catalog but now we can create multiple data catalogss within one databricks workspaces.
+The unity catalog object model
+==============================
+In Unity CATalog, all metadata is registered in a metastore. The hierarchy of database objects in any Unity Catalog metastore is divided into three levels, represented as three-level namespace - catalog.schema.table-etc when you reference tables, views, columes, models and functions.
+UNity catalog is called as Unity Metastore. We can only create one unity metastore in one region.
 
 
+
+ 
   
 
 
