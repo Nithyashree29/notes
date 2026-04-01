@@ -236,6 +236,9 @@ Databricks account console -> catalog  -> create metastore ->
 Access Connector for Azure Databricks resource -=> create -> provide your resource group -> Create
 click on storage account -> Access Control IAM -> add role -> storage blob contributor -> select managed identity -> select your access control created in the above step -> Create and assign that role so that access conector can now use the storage account. and now you can provide this access connector to our Databricks.
 
+Once we have the workspace created, we  need to connect our unity catalog or unity metastore to  enable unity catalog.
+By default when you create workspace you can see the hive_metastore(a catalog not a metastore because by default this is managed by the hive metastore).
+To create catalog, you need to create the databricks workspace with unity metastore to enable unity catalog. -> goto you yur accounts.azuredatabricks.net -> catalog -> <your databricks workspace>  -> assign -> and enable unity catalog.
 
 
 
