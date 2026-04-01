@@ -228,7 +228,16 @@ New unity metastore creation apart from the default provided by databricks
 ===========================================================================
 You create storage account and you will link the storage account to your unity metastore and this unity metastore will write data for your all the manages tables in this storage account if you donot define any location.
 If you dont provide the storage account while creating metastore, you will be creating catalog for every workspace then you have to provide the storage location . The best practice recommedation is to always attah storage location to your Unity Metastore.
-How will the metastore will be able to read and write the data to datalake? - It is via access connector. It will have the access to this data lake witj access of storage blob contributor and and we will use this connector in this metastore to access this data lake. 
+How will the metastore will be able to read and write the data to datalake? - It is via access connector. It will have the access to this data lake with access of storage blob contributor and and we will use this connector in this metastore to access this data lake. 
+
+accounts.azuredatabricks.net -> provide your email id  (get that in your home page -> microsoft entraid -> manage -> users -> pic your user account -> and pic your user email id, which is your external email ID) -> login withis ID.
+
+Databricks account console -> catalog  -> create metastore -> 
+Access Connector for Azure Databricks resource -=> create -> provide your resource group -> Create
+click on storage account -> Access Control IAM -> add role -> storage blob contributor -> select managed identity -> select your access control created in the above step -> Create and assign that role so that access conector can now use the storage account. and now you can provide this access connector to our Databricks.
+
+
+
 
 
 
