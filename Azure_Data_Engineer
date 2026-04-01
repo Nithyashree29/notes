@@ -239,6 +239,11 @@ click on storage account -> Access Control IAM -> add role -> storage blob contr
 Once we have the workspace created, we  need to connect our unity catalog or unity metastore to  enable unity catalog.
 By default when you create workspace you can see the hive_metastore(a catalog not a metastore because by default this is managed by the hive metastore).
 To create catalog, you need to create the databricks workspace with unity metastore to enable unity catalog. -> goto you yur accounts.azuredatabricks.net -> catalog -> <your databricks workspace>  -> assign -> and enable unity catalog.
+And once you have connected your  workspace to unity catalog then everything under that workspace for example when you create complute/cluster it will be governed. Now you can create multiple catalogs.
+Since we have attached your cluster with your notebook, That means your cluster is attached and will be responsible for all the computation.
+
+
+ 
 
 
 
