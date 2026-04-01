@@ -224,6 +224,13 @@ The unity catalog object model
 In Unity CATalog, all metadata is registered in a metastore. The hierarchy of database objects in any Unity Catalog metastore is divided into three levels, represented as three-level namespace - catalog.schema.table-etc when you reference tables, views, columes, models and functions.
 UNity catalog is called as Unity Metastore. We can only create one unity metastore in one region.
 
+New unity metastore creation apart from the default provided by databricks
+===========================================================================
+You create storage account and you will link the storage account to your unity metastore and this unity metastore will write data for your all the manages tables in this storage account if you donot define any location.
+If you dont provide the storage account while creating metastore, you will be creating catalog for every workspace then you have to provide the storage location . The best practice recommedation is to always attah storage location to your Unity Metastore.
+How will the metastore will be able to read and write the data to datalake? - It is via access connector. It will have the access to this data lake witj access of storage blob contributor and and we will use this connector in this metastore to access this data lake. 
+
+
 
 
  
