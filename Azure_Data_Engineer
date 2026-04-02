@@ -242,7 +242,15 @@ To create catalog, you need to create the databricks workspace with unity metast
 And once you have connected your  workspace to unity catalog then everything under that workspace for example when you create complute/cluster it will be governed. Now you can create multiple catalogs.
 Since we have attached your cluster with your notebook, That means your cluster is attached and will be responsible for all the computation.
 
+Magic commands - %python, %sql, %r, %md, %fs
+To access anything we should have access to data and we create external location.
+Ways to create external location - 2 ways and note that we cannot create external location/storage without Unity Catalog and to do that you should have storage credential.
+Access connector + attached to External location/storage = STORAGE CREDENTIAL -> an ID
+catalog -> external data -> create credentials -> atatch the ACCESS CONNECTOR ID -> Create (its like a ID CARD, where storage location will use to access the location. similar to Synapse, similar to database scope credential and external location is similar to externla data source in synapse.)
+After creating credentials -> create EXTERNAL LOCATION -> create till container level -> add the name and url for your bucket path (abfss://mycontainer@storagename.dbfs.core.windows.net/) -> and attach your storage credential -> CREATE.
+Now that you have created external location in metastore and that metadtore is linked to your databricks notebook you can read and write data.
 
+ 
  
 
 
