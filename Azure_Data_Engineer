@@ -250,9 +250,53 @@ catalog -> external data -> create credentials -> atatch the ACCESS CONNECTOR ID
 After creating credentials -> create EXTERNAL LOCATION -> create till container level -> add the name and url for your bucket path (abfss://mycontainer@storagename.dbfs.core.windows.net/) -> and attach your storage credential -> CREATE.
 Now that you have created external location in metastore and that metadtore is linked to your databricks notebook you can read and write data.
 
- 
- 
+** Managed Catalog - Managed Schema - Managed table **
+Create catalog man_cata
+create schema man_cata.man_schema
+create table man_cata.man_schema.<table_name>
+(
+  id int,
+  name string
+)
+USING DELTA
 
+** External Location - Managed Schema - Managed table **
+Create CATALOG ext_cata
+MANAGED LOCATIon 'abfss://mycontainer@storagename.dfs.core.windows.net/external_catalog'
+
+CREATE SCHEMA ext_cata.man_schema , will be stored in metastore location.
+
+CREATE TABLE ext_cata.man_schems.man_table , will be stored in external location
+(
+  id INT,
+  name STRING
+)
+USING DELTA
+
+** External Location - External Schema - Managed table **
+
+CREATE SCHEMA ext_cata.ext_schema
+MANAGED LOCATION 'abfss://mycontainer@storagename.dfs.core.windows.net/ext_schema'
+
+CREATE TABLE ext_cata.ext_schema.man_table
+(
+  id int,
+  name string
+)
+USING DELTA
+
+** External Table **
+CREATE TABLE man_cata.man_schema_ext_table 
+(
+  id int,
+  name String
+)
+LOCATION 'abfss://mycontainer@storagename.dfs.windows.net/ext_table/
+
+UNDROP TABLE man_cata.man_schema.man_table;
+
+VIEWS
+=====
 
 
 
