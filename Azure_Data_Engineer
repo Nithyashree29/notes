@@ -351,8 +351,23 @@ Traditinally it used to rewrite the data but not anymorein deletion vectors, wha
 
 OPTIMIZATIONS
 ==============
+By enabling deletion vectors the auto optimizations happens on the data to improve performance you can check that by using below command
+DESCRIBE HISTORY man_cata.man_schema.deltatle;
 
+OPTIMIZE  man_cata.man_schema.deltatle;
 
+DEEP CLONE AND SHALLOW CLONE in Delta tables
+==============================================
+Deep clone - it clones the metadata + data, similar to CTAS, Changes are independent of the other source and it just pics latest versions from the source.
+Shallow clone - only metadata is cloned.
+
+CEATE TABLE man_cata.man_schema.deepclonetbl
+DEEP CLONE man_cata.man_schema.deltatbl;
+
+Note - Shallow clone can only be created with managed tables.
+
+AutoLoader
+===========
 
 
  
