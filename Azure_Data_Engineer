@@ -368,13 +368,16 @@ Note - Shallow clone can only be created with managed tables.
 
 AutoLoader
 ===========
+Incremental Loading with Autoloader.
+from pyspark.sql import *
+df = spark.readStream.format('cloudfiles') \
+        .option('cloudfiles.format', 'parquet')\
+        .option('cloudfiles.schemaLocation', 'abfss://mycontainer@storagenmae.dfs.core.windows.net/autosink/check')
 
-
- 
-  
-
-
-
+df.writeStream.format('parquet')\
+        .option('checkpointLocation', 'abfss://mycontainer@storagenmae.dfs.core.windows.net/autosink/check')\
+        .trigger(processingTime = '10 seconds')\
+        .start('abfss://mycontainer@storagename.dfs.core.windows.net/autosink/data')
 
 
 
