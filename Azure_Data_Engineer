@@ -291,12 +291,36 @@ CREATE TABLE man_cata.man_schema_ext_table
   id int,
   name String
 )
-LOCATION 'abfss://mycontainer@storagename.dfs.windows.net/ext_table/
+LOCATION 'abfss://mycontainer@storagename.dfs.windows.net/ext_table/'
 
 UNDROP TABLE man_cata.man_schema.man_table;
 
 VIEWS
 =====
+Permanent Views - stay in the catalog level in the metastore level ns stays just like normal tables.
+================
+CREATE VIEW view_p
+AS
+SELECT * FROM delta.'abfss://mycontainer@storagename.dfs.windows.net/ext_table/' WHERE id = 1
+
+TEMP VIEW
+=========
+CREATE OR REPLACE TEMP VIEW view_temp
+AS
+SELECT * FROM delta.'abfss://mycontainer@storagename.dfs.windows.net/ext_table/' WHERE id = 1
+
+Volumes
+=======
+Volumes are Unity Catalog Objects representing a logical volume of storage in cloud object storage location. Volumes provide capabilities for accessing, storing, governing and organizinh files. While tables provide governance over tabular datasets, columes add governance over non-tabuilar datasets.
+
+dbutils.fs.mkdir('abfss://mycontainer@storagename.dfs.core.windows.net/volumes')
+
+CREATE EXTERNAL VOLUME man_cata.man_schema.extmyvolume
+LOCATION `abfss://mycontainer@storagename.dfs.core.windows.net/volumes`
+
+SELECT * FROM csv.'/Volumes/catalog/schema/<volume_identifier>/<path>/<file_name>`
+Now unity catalog can govern these files aswell apart form the metadata it used to govern.
+
 
 
 
