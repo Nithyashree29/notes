@@ -378,7 +378,31 @@ df.writeStream.format('parquet')\
         .option('checkpointLocation', 'abfss://mycontainer@storagenmae.dfs.core.windows.net/autosink/check')\
         .trigger(processingTime = '10 seconds')\
         .start('abfss://mycontainer@storagename.dfs.core.windows.net/autosink/data')
+Thinks that are created when you add checkpoint - schemas, commits, offsets, sources (when you create shema location , it will have rockdb and logs and STTs file[ stands for Sorted String Table]), metadata, _tmp_path_dir..
 
+Workflows in Databricks
+=========================
+within canvas you can create and atatch notebooks and assign params, and its like a DAG.
+
+Azure Synapse Analytics - Azure Data warehouse
+===============================================
+Data warehouse - Central Repository of the Organization. Source of truth.
+Cloud data warehouse advantages - Storage, Outage issue is resolved with high availability featur, performance like distributed querying/computing.
+
+Diff with Azure database vs AZURE data warehouse
+databases are designed in such a way that they can handle the transactions easily. where data will be written more often.
+data warehouse is meant for perform data reading queries, for reports..
+
+Cloud data warehousing -Via ETL/ELT data engineer brings the data from source to teh data warehouse.
+Read the data in batches and do loadung and push the data tin data warehouse and do trnasformations so that you dont disturb the source.
+Staging layer - is the first layer where you load the data.
+  Two types in staging layer - Transient (temporary) , persistent.
+Transform layer - to save your transforned data
+Core layer -  serving layer for business.
+
+Data Mart -> A subset of data warehouse which serves for specific purpose.
+Azure Synapse Analytics - is a data warehousing solution and more than just data warehousing
+Pipeline orchestration end to end data wraehousing etc is embedded within Azure Synapse Analytics.
 
 
 
