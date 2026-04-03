@@ -321,7 +321,36 @@ LOCATION `abfss://mycontainer@storagename.dfs.core.windows.net/volumes`
 SELECT * FROM csv.'/Volumes/catalog/schema/<volume_identifier>/<path>/<file_name>`
 Now unity catalog can govern these files aswell apart form the metadata it used to govern.
 
+Delta Table
+===========
+CREATE TABLE man_cata.man_schema.deltatable
+(
+  id int,
+  name string,
+  city string
+)
+USING DELTA
+LOCATION `abfss://deltalake(storage external location should be registered)@storage(storage external location should be registered).dfs.core.windows.net/delatbl`
 
+Deletion Vectors
+================ - will be truned on by default in latest versions.
+Just FYi - ALTER TABLE man_cata.man_schema.deltable SET TBLPTOPERTIES ('delta.enabledeletinVectors' = true)
+DESCRIBVE EXTENDED man_cata.man_schema.deltable
+if yor make any CRUD operation on the data in a table the other redudant file will be tombstoned.
+Before the deletion vector enabled the entore parquest file gets replicated with new changes okay.
+
+DESCRIBE HISTORY man_cata.man_schema.deltatbl.
+
+RESTORE man_cata.man_schema.deltatbl TO VERSION AS OF 2
+
+UPDATE man_cata.man_schema.deltatbl
+SET CITY = 'seattle' where id = 1
+
+After enabling the deletion vector you can see the adiyional "deletion_vector_** file"
+Traditinally it used to rewrite the data but not anymorein deletion vectors, what will that do?, it will create this deletion vector and will mark that updates record with ID = 1 as removed/ changed and it will just store that information in this deletion vector in that file and that record will be return in the parquet file without rewriting the entire record and add back to same removed file with deletion vector details .
+
+OPTIMIZATIONS
+==============
 
 
 
