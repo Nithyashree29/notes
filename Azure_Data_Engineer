@@ -458,8 +458,33 @@ CREATE EXTERNAL FILE FORMAT delta_format
   DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'
 )
 
+DEVELOP -> NEW SQL SCRIPT -> schema
+============================
+CREATE SCHEMA SalesDWH.silver;
+CREATE SCHEMA SalesDWH.gold;
 
-
+DEVELOP -> NEW SQL SCRIP -> tabel creation
+===========================================
+CREATE EXTERNAL TABLE silver.silverTable
+(
+  OrderId VARCHAR(100),
+  OrderDate Datetime,
+  CusomerID VARCHAR(100),
+  CustomerNae VARCHAR(100),
+  ..
+)
+WITH (
+  LOCATION  = 'enrichedSales.
+  DATA_SOURCE = silversource,
+  FILE_FORMAT = paruet
+Note - OPENrowset() -> If you want to ever want to query the files directly instead of tables.
+SELECT TOP 100 *
+FROM OPENROWSET (
+  BULK 'enrichedSales',
+  DATA_SOURCE = 'silver_source',
+  FORMAT ='PARQUET'
+)
+AS [result]
 
 
 
