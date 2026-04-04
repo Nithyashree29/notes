@@ -523,8 +523,23 @@ Staar Schema , Snow flake Schema
 
 Gold table Creation 
 ====================
- 
-
+IF NOT EXISTS (select * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id WHERE t.name = 'DimCustomer' and s.name = 'gold')
+CREATE EXTERNAL TABLE gold.DimCustomer
+AS 
+SELECT DISTINCT
+  customerId,
+  customerName,
+  customerEmail,
+  Domain,
+  ROW_NUMBER() OVER (ORDER BY Customer ID) as DimCustomerKey
+FROM
+  silver.silverTable
+WITH 
+(
+  LOCATIon = 'DimCustomer',
+  DATA_SOURCE =gold_source,
+  FILE_FORMAT = delta
+)
 
 
 
