@@ -465,6 +465,7 @@ CREATE SCHEMA SalesDWH.gold;
 
 DEVELOP -> NEW SQL SCRIP -> tabel creation
 ===========================================
+IF NOT EXISTS (select * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id WHERE t.name = 'SilveTable' and s.name = 'silver')
 CREATE EXTERNAL TABLE silver.silverTable
 (
   OrderId VARCHAR(100),
@@ -475,8 +476,9 @@ CREATE EXTERNAL TABLE silver.silverTable
 )
 WITH (
   LOCATION  = 'enrichedSales.
-  DATA_SOURCE = silversource,
-  FILE_FORMAT = paruet
+  DATA_SOURCE = silver_source,
+  FILE_FORMAT = parquet
+
 Note - OPENrowset() -> If you want to ever want to query the files directly instead of tables.
 SELECT TOP 100 *
 FROM OPENROWSET (
@@ -485,6 +487,127 @@ FROM OPENROWSET (
   FORMAT ='PARQUET'
 )
 AS [result]
+
+SELECT TOP 100 *
+FROM OPENROWSET (
+  BULK 'enrichedSales',
+  DATA_SOURCE = 'silver_source',
+  FORMAT ='PARQUET'
+)
+WITH (
+  ORDER_ID VARCHAR(100) 1
+)
+AS [result]
+
+Once yu have the sript ready for table creation on top of files -> go to pipelines -> atatch the script activity -> atatch the linked service with SQL database or Azure Synapse Analytics -> attach as your dynamix query.
+
+** Raw Ingestion (With copy activity) -> Transform layer (with dataflow activity and Silver table script)
+
+One big table with facts and dimensions
+========================================
+Data Modeling - Representation of how data is stored.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
