@@ -404,6 +404,60 @@ Data Mart -> A subset of data warehouse which serves for specific purpose.
 Azure Synapse Analytics - is a data warehousing solution and more than just data warehousing
 Pipeline orchestration end to end data wraehousing etc is embedded within Azure Synapse Analytics.
 
+Azure synapse components - Data, Develop, ADF as integrate, Monitor, 
+An additional thing you can have here is Apache spark pools.
+
+Simple data warehousing activity 
+================================
+In Integrate/ADF select copy activity as RAW INGESTION and copy data from source, azure data lake and sink as you destination side as a bronze layer/staging. we jave rocesdures or activities that perform for reading data increamentally using params, metadata okay..
+Tranformation layer as a new pipeline and search for DATA FLOW -> select your bronze data path as source -> do some transformations using some transformation steps  -> add that to silver path as enriched layer.
+
+Go to syanpse workspace -> DATA -> + -> SQL database (lakehouse selection if you use spark notebooks)-> select SQL pool
+  1. serverless - in serverless SQL pool we do not own the files. Means we create rhe data warehouse on top of files. In the modern world we save our dasta in the form of ORC  Parquet, DELta files and we create database on top of it, this is what serverlesss SQL pool.Usage also we can differentialte the compute(Serverless SQL pool) and storage(FILES) like an isolated layer. and we create tables on top of it as external tables.
+  2. Dedicated - Traditional way.
+Select serverless under DATA TAB - add database name, Sales DWH (once yo create you will have external tables, external resources, views, schemas, security).
+
+Go to Develop -> create a SQL Script -> name as external resources 
+In order to create external table you need two things -> 
+1. External Data Source, because we need to allow synapse or the perticular datawarehouse to use the container.
+2. External file format
+System managed identity - telling sypase to go to that location and just use it.
+In order to create External Data Source - you need 3. Databse SCoped Credentials
+
+** CREATE MASTER KEY **
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PASSWORD'
+
+** DATABASE SCOPED CREDENTIAL **
+CREATE DATABASE SCOPED CREDENTIAL nithya_creds
+WITH IDENTITY = 'Managed Identity'
+
+** EXTERNAL DATA SOURCE **
+CREATE EXTERNAL DATA SOURCE silver_source
+WITH (
+  LOCATION = 'https://azuredwhlake.dfs.core.windows.net/silver/'
+  CREDENTIAL = nithya_creds
+)
+
+CREATE EXTERNAL DATA SOURCE gold_source
+WITH (
+  LOCATION = 'https://azuredwhlake.dfs.core.windows.net/gold/'
+  CREDENTIAL = nithya_creds
+)
+Note - SAAS token is not that secure , you cna use system assigned managed identity.
+
+** EXTERNAL FILE FORMAT **
+CREATE EXTERNAL FILE FORMAT aprquet_format
+(
+  FORMAT_TYPE = PARQUET,
+  DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'
+)
+
+CREATE EXTERNAL FILE FORMAT delta_format
+(
+  FORMAT_TYPE = DELTA,
+  DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'
+)
+
 
 
 
