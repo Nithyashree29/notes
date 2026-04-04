@@ -506,6 +506,24 @@ Once yu have the sript ready for table creation on top of files -> go to pipelin
 One big table with facts and dimensions
 ========================================
 Data Modeling - Representation of how data is stored.
+Types -> Conceptual - Just like the raw table, just like orders table, 
+         Logical - normalization, Dimensional Data Model
+         Physical - The final logic data 
+
+Fact TAble -  We will store
+1. Numerical Columns
+2. Joining keys/Surrogate Keys.
+
+Dimensional Table
+Contextual columns rest colums apart from fact columns will be in Dymensions.
+Each dimensional table will be holding the one context.
+
+Dimensional Modelling - Its the representation of facts and dimensions
+Staar Schema , Snow flake Schema
+
+Gold table Creation 
+====================
+ 
 
 
 
