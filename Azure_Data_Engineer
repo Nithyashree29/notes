@@ -641,7 +641,7 @@ LEFT JOIN
   gold.DimGeography G ON F.RegionID = G.RegionID AND F.Country = G.country
 
 
-
+For the end users provide the - SERVERLESS SQL ENDPOINT 
 
 
 
