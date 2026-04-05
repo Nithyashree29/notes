@@ -523,29 +523,112 @@ Staar Schema , Snow flake Schema
 
 Gold table Creation 
 ====================
+** DimCustomer **
 IF NOT EXISTS (select * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id WHERE t.name = 'DimCustomer' and s.name = 'gold')
 CREATE EXTERNAL TABLE gold.DimCustomer
+WITH 
+(
+  LOCATION = 'DimCustomer',
+  DATA_SOURCE =gold_source,
+  FILE_FORMAT = parquet
+)
 AS 
+SELECT *, ROW_NUMBER() OVER (ORDER BY Customer ID) as DimCustomerKey
+FROM (
 SELECT DISTINCT
   customerId,
   customerName,
   customerEmail,
-  Domain,
-  ROW_NUMBER() OVER (ORDER BY Customer ID) as DimCustomerKey
+  Domain
 FROM
   silver.silverTable
+) as t
+** DimProducts **
+IF NOT EXISTS (select * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id WHERE t.name = 'DimProduct' and s.name = 'gold')
+CREATE EXTERNAL TABLE gold.DimProduct
 WITH 
 (
-  LOCATIon = 'DimCustomer',
+  LOCATION = 'DimProduct',
   DATA_SOURCE =gold_source,
-  FILE_FORMAT = delta
+  FILE_FORMAT = parquet
 )
+AS 
+Select 8,  ROW_NUMBER() OVER (ORDER BY ProductID) as DimProductKey
+FROM (
+SELECT DISTINCT
+  ProductId,
+  ProductName,
+  ProductCategory
+FROM
+  silver.silverTable
+) t
+
+** DimGeography **
+IF NOT EXISTS (select * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id WHERE t.name = 'DimGeography' and s.name = 'gold')
+CREATE EXTERNAL TABLE gold.DimGeography
+WITH 
+(
+  LOCATION = 'DimGeography',
+  DATA_SOURCE =gold_source,
+  FILE_FORMAT = parquet
+)
+AS 
+SELECT *, ROW_NUMBER() OVER (ORDER BY t.RegionID) as DimGeographyKey
+FROM 
+(
+SELECT DISTINCT
+  RegionID,
+  Country
+FROM
+  silver.silverTable
+) T
+
+** Orders Table - details regarding all context customer, Products, geography, Dude Its a Mandetory thing to create **
+IF NOT EXISTS (select * from sys.tables t join sys.schemas s on t.schema_id = s.schema_id WHERE t.name = 'DimOrders' and s.name = 'gold')
+CREATE EXTERNAL TABLE gold.DimOrder
+WITH 
+(
+  LOCATION = 'Dimorder',
+  DATA_SOURCE =gold_source,
+  FILE_FORMAT = parquet
+)
+AS 
+SELECT * ,   ROW_NUMBER() OVER (ORDER BY t.OrderID) as DimOrdersKey 
+FROM (
+SELECT DISTINCT
+  OrderID,
+  CustomerID
+  ProductId,
+  CustomerName,
+  CustomerEmail,
+  ProductName,
+  ProductCategory,
+  RegionID,
+  Domain
+
+FROM
+  silver.silverTable
+) t
 
 
-
-
-
-
+** Fact Table **
+SELECT 
+  O.DimOrdersKey,
+  C.DimCustomerkey,
+  P.DimproductKey,
+  G.DimGrographyKey,
+  F.Quantity,
+  F.UnitPrice,
+  F.TotalAmount,
+From Silver.silverTable F  
+LEFT JOIN 
+  gold.DimOrders O ON F.OrderID = O.OrderID
+LEFT JOIN
+  gold.DimCustomer C ON F.CustomerID = C.CustomerID
+LEFT JOIN 
+  gold.DimProduct P ON F.ProductID = p.ProductID
+LEFT JOIN
+  gold.DimGeography G ON F.RegionID = G.RegionID AND F.Country = G.country
 
 
 
