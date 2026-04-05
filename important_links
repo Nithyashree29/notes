@@ -182,3 +182,68 @@ https://lnkd.in/gFR2xCZE
 
 10. Issue #26 – The Data Product Deep Dive (Part 1 – What Are They) by Dylan Anderson
 https://lnkd.in/g5JQzdQb
+
+
+If you're a data engineer and want to learn how big-tech companies do data engineering, read these articles:
+
+
+◉ YouTube
+- CI/CD for thousands of data pipelines: https://lnkd.in/g8dW4wUF
+
+
+◉ Uber
+- Infra Evolution: https://lnkd.in/gqFspYhy
+- Real-time infra: https://lnkd.in/gKe9sPEa
+- Data infra: https://lnkd.in/g6M2Wwdq
+- Solve Spark shuffle problem: https://lnkd.in/gRzA3hBi
+- Uber's motivation to create Hudi: https://lnkd.in/gvqCgbPD
+- Data quality at Uber: https://lnkd.in/gJHeGeht
+
+◉ LinkedIn
+
+- Data Infra: https://lnkd.in/gmWyDGt7
+- 7 trillion messages with Kafka: https://lnkd.in/g2p5tf3R
+- Real-time processing with Apache Beam: https://lnkd.in/dFzBU67q
+- Metadata platform: https://lnkd.in/g4ftJghQ
+- Replacing Kafka: https://lnkd.in/gaE8ydjB
+
+◉ Netflix
+- Real-time data infra: https://lnkd.in/gfPiJjHd
+- Data engineering stack: https://lnkd.in/eXkQa5W4
+- Operating Iceberg at scale: https://lnkd.in/g2MDDtJ3
+- Data quality with Iceberg: https://lnkd.in/gqZN54qm
+
+◉ Meta
+- Real-time infra: https://lnkd.in/gvk6uWm7
+- Modernize the lakehouse infra: https://lnkd.in/gq-bZCCn
+- Data Lineage at Scale: https://lnkd.in/gmMrxQsz
+
+◉ Doordash
+- Real-time processing system: https://lnkd.in/gVBpXtNt
+- Evolve realtime processing platform with Iceberg: https://lnkd.in/gWXWnj4y
+
+◉ Twitter
+- 4 billion events in real-time daily: https://lnkd.in/gAgrcTMr
+
+◉ Notion
+- 200 billion data entities: https://lnkd.in/dQWJZ5c4
+
+◉ Discord
+- Evolve to handle trillions of data points: https://lnkd.in/dsMR95Zj
+
+◉ Clickhouse
+- How they build their internal data warehouse: https://lnkd.in/gUeATcxu
+
+◉ Spotify
+- How they build their data platform: https://lnkd.in/g6kC8bZE
+
+◉ Walmart
+- Why these chose Apache Hudi: https://lnkd.in/gi5cAFTy
+
+◉ Airbnb
+- How they build the semantic layer: https://lnkd.in/gkagEbah
+
+(To be updated...)
+
+--
+I'm writing articles for 𝟭𝟳,𝟬𝟬𝟬+ data engineers worldwide. Join the community with 𝟱𝟬% 𝗱𝗶𝘀𝗰𝗼𝘂𝗻𝘁 𝗼𝗻 𝘁𝗵𝗲 𝗮𝗻𝗻𝘂𝗮𝗹 𝘀𝘂𝗯𝘀𝗰𝗿𝗶𝗽𝘁𝗶𝗼𝗻 now: https://lnkd.in/gDpy__uR
