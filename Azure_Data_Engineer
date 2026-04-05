@@ -643,6 +643,15 @@ LEFT JOIN
 
 For the end users provide the - SERVERLESS SQL ENDPOINT 
 
+SLOWLY CHANGING DIMEMSIONS
+===========================
+Type 0 - No change
+Type 1 - UPSERT
+Type 2 - History
+Type 3 - Adding the previous value when change in the record.
+
+
+
 
 
 
