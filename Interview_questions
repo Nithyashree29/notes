@@ -27,7 +27,7 @@ SCenario 2
 ==========
 Your company receives daily exchange rate data from third-party financial service through a REST API. This API returns data in JSON format and requires an authentication token that is refreshed every 60 seconds.
 How would you design and implement ths solution using Azure Data Factory ? Walk through the key components and steps you would use.
-
+In ADF -> create pipeline -> select WEB activity / alternate to POSTMAN -> give your URL -> and get the response -> to store the data somewhere send the output via COPY ACTIVITY and select the input as REST with its LS and the sink with its LS.
 
 
 
