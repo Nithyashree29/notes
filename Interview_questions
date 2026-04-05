@@ -15,7 +15,18 @@ When you want to pull your data form OnPremise to Azure cloud you need to create
 Azure-SSIS - Lieft and shift existing SSIS pacjages to execute in Azure. Before Cloud Azure SSIS was the primary source is the integration between your SQL servers with the external provders now we use ADF.
 Airflow - Use this for running your existsing DAG's
 
+Once you create the self-hosted Integration Runtime we need to install the package on our local machine and then we need to paste that particular code which it provides to us and then connection will be successful.
 
+Follow up question - STeps are fine but in real life i as a developer will be using the company laptop now if we want to transfer some data from your machine from your laptop hoe other developers can do that? 
+In real world we wont be using our machines. We will be using something called as virtual machines/servers and we create those virtual machines/virtual servers as our itegration runtime machines. So instead of downloading the integration runtime on local we will be doing same on virtual machines and this mahcine will behave like a integration runtime once you provide the key.
+
+When you see throtling like CPU is >90% ..? - You can scale up your virtual machines so that your mahcine can handle the load.
+Once you create IRS -> you can pic your destination and select your SELF HOSTED SSIR.
+
+SCenario 2
+==========
+Your company receives daily exchange rate data from third-party financial service through a REST API. This API returns data in JSON format and requires an authentication token that is refreshed every 60 seconds.
+How would you design and implement ths solution using Azure Data Factory ? Walk through the key components and steps you would use.
 
 
 
