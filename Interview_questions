@@ -10,8 +10,10 @@ How would you approach migrating data from the on-premise systems to Azure Data 
 Integration Runtime - Is a compute or a resource which is required to migrate your data. Which provides the necessary computation resources to migrate your data and perform all the data flows to perform all the data transformations. Basically the activities within the Azure Data Factory.
 
 autoResolveIntegrationRuntime - The best integration Runtime to perform all the operations within Azure network.
-When you want to pull your data form OnPremise to Azure cloud you need to create SELF HOSTED INTEGRATTION RUNTIME, which will be managed by me.
+When you want to pull your data form OnPremise to Azure cloud you need to create SELF HOSTED INTEGRATTION RUNTIME, which will be managed by me. Pefofrm data flows, data movement and dispatch activities to external compute.
 
+Azure-SSIS - Lieft and shift existing SSIS pacjages to execute in Azure. Before Cloud Azure SSIS was the primary source is the integration between your SQL servers with the external provders now we use ADF.
+Airflow - Use this for running your existsing DAG's
 
 
 
