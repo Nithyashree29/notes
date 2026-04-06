@@ -38,6 +38,19 @@ Cost model matters,Pay-per-activity-run pricing; no always-on cluster cost
 
 Why not script? - Complex + state management (similar to langraph, from node to another). Here its not about managing the order or wutomation, its much more than that.
 
+Core Components Of Airflow
+===========================
+- Matadata Database : like Details about your DAG's, its definitions, its scheduled time, status, task instance ...
+- DAG File Processor : DAG file processor will got o your dags folder and will parse it and store the serialized DAG into the DB.
+Note - serialized DAG, is something, when you write your code in Python, it converts the code for the respective DAG into a JSON representation and store that in the Database.
+- API Server : The backbone where you interact, the frontend - your web server where all the components will communicate. Where it sends the request to via API to the database. API is the middle mam for every task.
+- Scheduler : Scheduler is reponsible for what and when tasks needs to be executed.
+- Executor : It only decides how and where the tasks needs to be run, (not like the common execuition of the tasks), Like a middle man between order (scheduler) and the worker (who does the tasks). 
+  Note - just have a look at the different types of executors.
+  
+
+
+
 
 
 
