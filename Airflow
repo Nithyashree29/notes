@@ -47,7 +47,16 @@ Note - serialized DAG, is something, when you write your code in Python, it conv
 - Scheduler : Scheduler is reponsible for what and when tasks needs to be executed.
 - Executor : It only decides how and where the tasks needs to be run, (not like the common execuition of the tasks), Like a middle man between order (scheduler) and the worker (who does the tasks). 
   Note - just have a look at the different types of executors.
-  
+- Workers : The main components that executes the tasks written by DAG's.
+- Queue : Prioritization of tasks with respect to order.
+Note - Two types of Queue
+  1. Execution Queue
+  2. Redis Queue
+- Triggerer : Is like something which tries to monitor some tasks and once you get response it will send it back to the main worker and main worker can take up based on he priority set by the scheduler.
+The Triggerer is an Airflow component (introduced in Airflow 2.2) that enables deferrable operators — tasks that can suspend themselves, free up their worker slot, and resume later when an external condition is met.With Triggerer: The task releases its worker slot while waiting. A single Triggerer process can handle thousands of deferred tasks concurrently using Python's asyncio.
+
+Airflow Architecture
+====================
 
 
 
