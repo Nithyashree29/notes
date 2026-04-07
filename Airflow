@@ -129,6 +129,17 @@ Airflow Architecture
                                 │
                              deferred → triggerer → running → success
 
+Steps:
+1. User/ ME developer writes the DAGS CODE, under dags folder which are just the python files.
+2. Dag Processor will parse these Dags and it will store this DAG into database, And we use Postgress database as our metadata db where we store the serialized DAG.
+  2.1 ANd it stores using API to store the data into the metadata database. This API is integrated within the DAG processor.
+3. Now comes the scheduler, Scheduler will read/process all the dags from that metadata and create DAG runs using API.
+4. Once Schedular gets the information , scheduler will store all that information in a queue. This Queue will have all the tasks which is the Execution Queue(which for executor not for workers).
+5. Now Executor come once we have the tasks in Executor queue and all the strategies will be decided by the executor.And this executor will put all the tasks in the REDIS QUEUE with a strategy by executor.
+6. Once we have tasks in the REDIS QUEUE we can call our worker.
+7. Now Worker will take the work from the Redis QUEUE. It will execute the tasks and it will write back results back to the Database VIA API.
+In any chance if we have any task that can be deferred like idle state, we mention the defer function in our DAG, For example we make API call to process the data using Notebook, it can be an API call to AWS, Databricks , AZure ... and we know that processing a Spark notebook will take time as its a big data. So here we use a defer function.So what is defer function do is it calles our triggerer and then that work can be handed over to the triggerer. AND EXCEPt the code inder defer function resyt needs to be executed. Trigger is just a junior developer to Monitor. and also note that trigger canbnot directly handover the task to worker, Trigger will simply change the state of the task and that state will be stored in the database.AND AGAIN SCHEDULER will pick that information it will put in execution queue and then from executor to redis queue etc.... same thing.
+
 
 
 
