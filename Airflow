@@ -145,6 +145,11 @@ Core Concepts of Airflow
 DAG - Directed Acyclic Graph
 Task Instance - Single unit of work is a task.Good practise is that try to be as granular as possible.
 Task should be very specific and should be easy for debugging.
+Operator - Catagory of task. An operator is a conceptually for a predefined Task, that you can define declaratively inside your Dag.
+  It's the pre-built template for our tasks.
+  It basically tells Airflow what type of tasks we are running.
+
+
 
 
 
