@@ -140,6 +140,10 @@ Steps:
 7. Now Worker will take the work from the Redis QUEUE. It will execute the tasks and it will write back results back to the Database VIA API.
 In any chance if we have any task that can be deferred like idle state, we mention the defer function in our DAG, For example we make API call to process the data using Notebook, it can be an API call to AWS, Databricks , AZure ... and we know that processing a Spark notebook will take time as its a big data. So here we use a defer function.So what is defer function do is it calles our triggerer and then that work can be handed over to the triggerer. AND EXCEPt the code inder defer function resyt needs to be executed. Trigger is just a junior developer to Monitor. and also note that trigger canbnot directly handover the task to worker, Trigger will simply change the state of the task and that state will be stored in the database.AND AGAIN SCHEDULER will pick that information it will put in execution queue and then from executor to redis queue etc.... same thing.
 
+Core Concepts of Airflow
+=========================
+DAG - Directed Acyclic Graph
+Task Instance - Single unit of work is a task
 
 
 
