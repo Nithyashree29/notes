@@ -29,11 +29,16 @@ Your company receives daily exchange rate data from third-party financial servic
 How would you design and implement ths solution using Azure Data Factory ? Walk through the key components and steps you would use.
 In ADF -> create pipeline -> select WEB activity / alternate to POSTMAN -> give your URL -> and get the response -> to store the data somewhere send the output via COPY ACTIVITY and select the input as REST with its LS and the sink with its LS.
   Incase of json data under the mapping it wont select the main key and we need to include as it treats as different entity uncheck the boxes and check again to import schema.
-Note - if the response is not in the form of JSON, if in csv,  will you use REST API ? No, you should use HTTP CONNECTION , iT IS A recommended approach suggested by Miccrosoft that if we are gettubg the data directly as a response not in the form of JSON , Your always use HTTP.Because it will treat that as a data and dump and bring it to your destination data lake. You can use WEB activity but it needs lots of transformation logic. So it is recommended to use if you are getting data in the form of delimited text directly in the API calls 
+Note - if the response is not in the form of JSON, if in csv,  will you use REST API ? No, you should use HTTP CONNECTION , iT IS A recommended approach suggested by Miccrosoft that if we are gettubg the data directly as a response not in the form of JSON , Your always use HTTP.Because it will treat that as a data and dump and bring it to your destination data lake. You can use WEB activity but it needs lots of transformation logic. So it is recommended to use if you are getting data in the form of delimited text directly in the API calls and for web activity you can use and provide the base url but it will be a JSON output  and it requires lot of transformations.
+So it is always recommended if you are getting data in the form of delimited text directly in the API calls always use HTTP connection and you can directly decide which format you want to use to ingest the data.
+
 
 Scenario 3
 ============
-You're working on an ELT pipeline in a cloud-based data platform likeAzure datafactory, AWS Glue, or Databricks. One of the pipeline activities is an API call to fetch data from a third-party service. This API is known o occasionlly fail due to temporary network glitches or rate limiting issues. How would you design this pipeline activity to handle intermittent failures gracefully without rerunning the entire pipeline?
+You're working on an ELT pipeline in a cloud-based data platform likeAzure datafactory, AWS Glue, or Databricks. One of the pipeline activities is an API call to fetch data from a third-party service. This API is known o occasionlly fail due to temporary network glitches or rate limiting issues. How would you design this pipeline activity to handle "intermittent failures" gracefully without rerunning the entire pipeline?
+This is more on the Networking side, which is not under your control.
+In the pipleine under each activity you will be having the retry option which runs only the failed activity instead of rerunning entire pipeline. (bABY don't say i see monitor tab and all, its network issue babe).
+
 
 
 
