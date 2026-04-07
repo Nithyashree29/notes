@@ -143,7 +143,9 @@ In any chance if we have any task that can be deferred like idle state, we menti
 Core Concepts of Airflow
 =========================
 DAG - Directed Acyclic Graph
-Task Instance - Single unit of work is a task
+Task Instance - Single unit of work is a task.Good practise is that try to be as granular as possible.
+Task should be very specific and should be easy for debugging.
+
 
 
 
