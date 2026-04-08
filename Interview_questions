@@ -63,7 +63,18 @@ Azure key valut resource -> create -> go to that created resource -> goto object
   iN ORDER TO MAKE THE API call, you need to assign the role to this Azure Data Factory as well to read the Key Valut information just like you assigned yourself to read it.
 IAM - add role -> KEY VALUT ADMINISTRATor -> Managed Identity(not user group ) -> pick your ADF name  -> ASSIGN.
 
+Scenario 7
+==========
+The company receives daily sales data files from multiple regional branches. These files are uploaded at random times throughout the day to specific folder in Azure Data LAke storage Gen2 account. Your goal is to ensure that as soon as a new file arrives oin this folder, an Azure Data Factory pipeline is triggered automatically
+  How would you design a solution in AAzure data Factory (or Synapsse) to automatically trigger the pipeline whenever a new file is added to the specified folder in Azure Data Lake storage Gen2?
+pipeline -> trigger -> select type of trigger  -> these are nore inclined towards scheduling a pipeline and select the storage events trigger and provide your storage details, you can also select the event based on Blob created or Blob deleted.
+  WHAT if withput event trigger -> VIA VALIDATION ACTIVITY -> which will continously searches the new files not a better one but via one such.
 
+Scenario 7
+===========
+
+Your're working as a data engineer for a retail company that stores large volumes of historical customer transaction data in an Azure Data Lake storage gen2 in CSV format. The business wants to run ad-hoc SQL queries on this data from Azure Synapse Analytics without copying it into the Synapse dedicated SQL pool.
+How would you uswe Polybase in Azure Synapse Analytics to query this extended data stored in Data Lake? Please explain steps involved.
 
 
 
