@@ -75,10 +75,37 @@ Scenario 7
 
 Your're working as a data engineer for a retail company that stores large volumes of historical customer transaction data in an Azure Data Lake storage gen2 in CSV format. The business wants to run ad-hoc SQL queries on this data from Azure Synapse Analytics without copying it into the Synapse dedicated SQL pool.
 How would you uswe Polybase in Azure Synapse Analytics to query this extended data stored in Data Lake? Please explain steps involved.
+Azure Synapse has too pools - 
+1. Azure synapse serverless SQL pool - we donot copy the data, we use something calles as Polybase.
+2. Synapsededicated pool - we copy the real data inside data warehouse or real tables, very expensive and one reason why tend to serverless SQL pool.
+step 1 - Create mastr key for your database
+step 2 - Create the credential - access to that particular storage, which will be in this case Synapse Analytics.
+step 3 - will be creating external data source.
+step 4 - creating external file format.
+step 5 - Create external table.
+After all these steps you can do adhoc query without copying the data and have the data in datalake itself.
 
+Scenario 8
+==========
+You are responsible for designing a synapse pipeline to incrementally load data from the Azure SQL source into Data LAke using Parquet format, without loading the entire dataset each time. The company also wants the solution to be efficient and cost-effective. How would you implement incremental loading in Synapse pipelines in this scenario?
 
+  1. Water marking approach. - for other source including SQL database.
+under copy activity you do select * with table WHERE update_date > x and that where clause is your date or important column
+  2. That x will be coming from the lookup activity which tells you the last date. (last load of the destination)
+  3. One more lookup which gives you max date of the current data source 
+  4. pass 2 and 3 to 1 copy activity and store that in stored procedure. or
+  5. You can use COPY activity instead of stored procedure and this copy activit will store your max state and you will not query the stored procedure or table , you will query the  file -> Modern apaproach.
 
+  2. CDC (Change data capture) - This feature is very handy when you have the SQL data database as a source.
+UnDER THE ADF - select CDC - source type -
+Enable the CDC in the DB
+Enable the CDC for table
+Connect that table under CDC section you will able to see it.
 
+Scenario 9
+==========
+You're working on a data transformation job in Spark where large datasets from different sources are being joined and aggregated. The data volumne varies significantly based on the day and data source. Initially, you tuned the join strategy and number of partitions manually, but you observed that jonb still fails sometimes due to skewed data or inefficient joins. You enables broadcast joins, but its hard to predict right size threshold.
+  How can Adaptive Query Execution help in this scenario? What specific features AQE would address that issues mentioned, and how would you enable them in Spark?
 
 
 
