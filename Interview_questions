@@ -39,7 +39,29 @@ You're working on an ELT pipeline in a cloud-based data platform likeAzure dataf
 This is more on the Networking side, which is not under your control.
 In the pipleine under each activity you will be having the retry option which runs only the failed activity instead of rerunning entire pipeline. (bABY don't say i see monitor tab and all, its network issue babe).
 
+Scenario 4
+==========
+You are working as a Data engineer in a retail company. The company relies heavily on daily ETL pipelines built in Azure Data Factory (ADF) to load sales data from various regions into a central data warehouse. Recently, a few pipeline failures went unnoticed, which caused delays in business reporting and decision-making.
+  How would you design and implement a monitoring and alerting mechanism in ADF to notify the team immediately in case of any ETL pipeline failure?
+Under Monitor Tab -> Alerts & Metrics -> new alert Rule -> select the criteria -> configure notification -> select your group name -> add email/sms, ..
+Before you do this you should enable and register -> it is bit costly to fetch metrics.
 
+Scenario 5
+==========
+You're working on a PySpark job that processes customer transactions data from multiple sources. The initial steps heavy transformations like joins, filters, and aggregations, and intermediate result is reused in multiple parts of the pipeline - forst for generating KPIs. then for writing different outputs to Delta tables, and finally for some visualizations.
+  Given that the same intermediate Dataframe is reused in multiple stages, how would you optimize performance in this situation?.
+Cache() - A persist method without parameters  and persist() - with some special properties.
+In the pool resource we have storage and execution and in execution all your tasks things happen and if you want to store your df then it gets stored in the STORAGE MEMORY and EXECUTION MEMORY can use that when needed instead of reading from disk.
+
+Scenario 6
+==========
+You're working on an Azure Data Factory (ADF) pipeline that involves calling a REST API through a WEB activity. This API requires an access key for authentication. To follow the best practices, your team has decided to store the API key securely using AZure key valut instead of hardcoding it in the pipeline.
+  How would you implement the above scenario end-to-end in Azure data Factory? walk me through each step you would take, from creating the Key Valut to using its secret in the Web Activity, and ensuring secure handling of the output.
+Azure key valut resource -> create -> go to that created resource -> goto objects/secrets -> add the name and value -> create.  -> it can have verisons if you want to edit it.
+  Before doing that you should have power to create secrets within key valut -> goto IAM -> add role AZURE KEY VALUT ADMINISTRATion.. -> select member -> add my email -> create secrets now.
+  In pipeline - web activity -> add your secret URL?verison -> GET method -Authentication- SYSTEM-ASSIGNED MANAGED IDNETITY, why, because you Azure Data Factory should have the access. -> Add resource, https://vault.azure.net/  -> run, but thsi will display the results so to protect it check the secure output box -> its secure now.
+  iN ORDER TO MAKE THE API call, you need to assign the role to this Azure Data Factory as well to read the Key Valut information just like you assigned yourself to read it.
+IAM - add role -> KEY VALUT ADMINISTRATor -> Managed Identity(not user group ) -> pick your ADF name  -> ASSIGN.
 
 
 
