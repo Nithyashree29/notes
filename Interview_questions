@@ -122,6 +122,10 @@ FOR EACH ACTIVITY - items -> select DYNAMIC @activity('Get File Names').output.c
 SWICTH ACTIVITY - it acts like a CASE statement -> Under EXPRESSION -> @replace(item().name, '.','')
 Under CASE add the dataset name , enter the tensil and add your required activity or waiut activity.
 
+Scenario 11
+=============
+You are expected to build a dynamic solution that reads the schema and maps source columns to destination columns automatically at runtime. How do you implement dynamic column mapping in Synapse Pipelines to handle this scenario? Explain your approach detail including
+
 
 
 
