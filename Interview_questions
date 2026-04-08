@@ -106,6 +106,21 @@ Scenario 9
 ==========
 You're working on a data transformation job in Spark where large datasets from different sources are being joined and aggregated. The data volumne varies significantly based on the day and data source. Initially, you tuned the join strategy and number of partitions manually, but you observed that jonb still fails sometimes due to skewed data or inefficient joins. You enables broadcast joins, but its hard to predict right size threshold.
   How can Adaptive Query Execution help in this scenario? What specific features AQE would address that issues mentioned, and how would you enable them in Spark?
+All the issues can be addresed by AQE from Spark 3.0 version onwards.
+Features
+1. It calculates the Query stats during run time.
+2. It addresses Skewness - it divides the skewed data into multiplt partitions.
+3. Dynamically coalesing the partitions.
+4. Dynamic picking of the joins.
+
+Scenario 10
+============
+You are working on an Aazure data factory pipeline that triggers when a new file is uploaded to a DatA Lake container. Each file needs to go through a different transformation activity. You are required to design the pipeline such that it automatically detects the file name and executes the appropriate activity, without running all activities for every file.   
+  How would you design this pipeline to ensure that only the correct activity runs for each specific file, based on its name?
+GET META DATA ACTIVITY -> select your dataset source -> under field list select child list -> feed the output to FOr loop
+FOR EACH ACTIVITY - items -> select DYNAMIC @activity('Get File Names').output.childnames -> inside the forloop select SWITCH ACTIVITY
+SWICTH ACTIVITY - it acts like a CASE statement -> Under EXPRESSION -> @replace(item().name, '.','')
+Under CASE add the dataset name , enter the tensil and add your required activity or waiut activity.
 
 
 
