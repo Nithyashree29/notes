@@ -125,6 +125,14 @@ Under CASE add the dataset name , enter the tensil and add your required activit
 Scenario 11
 =============
 You are expected to build a dynamic solution that reads the schema and maps source columns to destination columns automatically at runtime. How do you implement dynamic column mapping in Synapse Pipelines to handle this scenario? Explain your approach detail including
+COPY ACTIVITY -> add source -> add sink with location
+Under Mapping, import schema you can do what changes you want to..
+
+But the schema should be strict but by dynamic approach.
+How ? - under the copy activity code -> get the code for mapping with JSON TRANSLATOR. -> copy 
+Delete the mappings under the mapping section -> ADD DYNAMIC CONTENT, 1. Add the @json('{}') 
+2. Create a param outside activity , type as object, add your same json value adn now go to the activity -> mapping -> add dynamic content -> @pipeline().parameters.p_mapping.
+you can create multiple params and you can create array and loop and make the dynamic content or mapping.
 
 
 
