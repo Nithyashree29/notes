@@ -147,6 +147,7 @@ Total number of executores = 80/5 = 16 Executors.
 5 cores * 128 MB(as per partition) = 640MB, so each executor needs 640MB to process the data/to execute the task.
 We need 640 MB to process data and ideally like 3-4 times 640 * 3.5/4 = 2.64GB 
 So if the executor has ~2.64GB of memory then only it can process 640MB of your data.
+and explain why also because you have spark pool memory which is 60% of the storage execution memory and where 50% of it is for the storage dfor caching and 50% for execution.
 
 
 
