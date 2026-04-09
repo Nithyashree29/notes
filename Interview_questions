@@ -134,6 +134,19 @@ Delete the mappings under the mapping section -> ADD DYNAMIC CONTENT, 1. Add the
 2. Create a param outside activity , type as object, add your same json value adn now go to the activity -> mapping -> add dynamic content -> @pipeline().parameters.p_mapping.
 you can create multiple params and you can create array and loop and make the dynamic content or mapping.
 
+Scenario 12
+===========
+Yor need to process 10GB of data using Spark. How many Executors you would need, and how much memory you would need for each Executor to get the maximum parallelism? Also, how many cores should be there?
+data - 10GB
+default partition size = 128MB
+10GB/128MB - 80 partitions in total
+for max parallelism we need 80 Cores
+Ideally you should pic 5 CORES per-executor so that no issues with the hdfs throughput.
+Total number of executores = 80/5 = 16 Executors.
+
+5 cores * 128 MB(as per partition) = 640MB, so each executor needs 640MB to process the data/to execute the task.
+We need 640 MB to process data and ideally like 3-4 times 640 * 3.5/4 = 2.64GB 
+So if the executor has ~2.64GB of memory then only it can process 640MB of your data.
 
 
 
