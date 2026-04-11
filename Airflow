@@ -164,14 +164,21 @@ In Schedule we have 3 ways
         catch_up = True  #if needed, if when you need to catch up everything.
 )
 2. Cron Syntax - Just like your cron schedule in your dream company babe..
-@dag(
+    @dag(
+            dag_id = "cron_schedule_dag",
+            start_date = datetime(year =2026, month = 4, day= 11),
+            schedule = CronTriggerTimetable(cron="0 16 * * MON-FRI", timezone= "Europe/Dublin"), 
+            end_date  = datetime(year =2026, month = 4, day= 30),
+            is_paused_upon_creation=False
+    )
+3. Delta - same as corn but special function called duration (sometimes cron cannot run such tyoes for example when its feb )
+    @dag(
         dag_id = "cron_schedule_dag",
         start_date = datetime(year =2026, month = 4, day= 11),
-        schedule = CronTriggerTimetable(cron="0 16 * * MON-FRI", timezone= "Europe/Dublin"), 
+        schedule = DeltaTriggerTimetable(duration(days=3)), 
         end_date  = datetime(year =2026, month = 4, day= 30),
         is_paused_upon_creation=False
 )
-
 
 
 
