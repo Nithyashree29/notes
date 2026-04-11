@@ -150,6 +150,9 @@ Operator - Catagory of task. An operator is a conceptually for a predefined Task
   It basically tells Airflow what type of tasks we are running.
 
 XCOMs -> Travell our information between the tasks we use XCOMS, like using the output from one task to another as a Input.
+parallel tasks
+
+Scheduling in Airflow
 
 
 
