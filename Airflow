@@ -153,7 +153,24 @@ XCOMs -> Travell our information between the tasks we use XCOMS, like using the 
 parallel tasks - Running tasks in parallel.
 Scheduling in Airflow - 
   Start_date, end_date, catch_up (It is used to tell AIRFLOW TO RUN THE DAG for the missed intervals, Schedule.
-
+In Schedule we have 3 ways
+1. Presets - AUTOMATICALLY DEFINED by the airflow. ex - Hourly, weekely, monthly ...
+    You can set the conditions as below
+    @dag(
+        dag_id = "first_schedule_dag",
+        start_date = datetime(year =2026, month = 4, day= 11, tz="America/Halifax"),
+        schedule = "@daily",
+        is_paused_upon_creation=False # which control if it should start automatically or not,
+        catch_up = True  #if needed, if when you need to catch up everything.
+)
+2. Cron Syntax - Just like your cron schedule in your dream company babe..
+@dag(
+        dag_id = "cron_schedule_dag",
+        start_date = datetime(year =2026, month = 4, day= 11),
+        schedule = CronTriggerTimetable(cron="0 16 * * MON-FRI", timezone= "Europe/Dublin"), 
+        end_date  = datetime(year =2026, month = 4, day= 30),
+        is_paused_upon_creation=False
+)
 
 
 
