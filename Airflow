@@ -182,7 +182,8 @@ In Schedule we have 3 ways
 
 Incremental Load and Templating
 ================================
-Uisng data lake its better to manage the incremental loading but in some requirements you need to use the airflow.
+Using data lake its better to manage the incremental loading but in some requirements you need to use the airflow.
+In Airflow to run incremental loading we use the "INTERVAL BASED SCHEDULE" the above schedules are "TRIGGER BASED SCHEDULE".
 
 
 
