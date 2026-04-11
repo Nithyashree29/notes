@@ -180,7 +180,9 @@ In Schedule we have 3 ways
         is_paused_upon_creation=False
 )
 
-
+Incremental Load and Templating
+================================
+Uisng data lake its better to manage the incremental loading but in some requirements you need to use the airflow.
 
 
 
