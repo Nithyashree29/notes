@@ -295,20 +295,24 @@ Orchestration of DAG's
 =================================================
 Ruuning Dag 1 and then DAG 2 ..
 from airflow.sdk import dag, task
-from dag_orchestrate_1 import first_orchestarte_dag
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from dag_orchestrate_1 import first_orchestarte_dag  #just a dag id and not a executor or operator, hence you use special function called TRiggerDagRunOperator which runs the child dags.
 from dag_orchestrate_2 import second_orchestarte_dag
 
 @dag 
 def dag_orchestratre_parent():
-    @task.python
-    def first_orchestarte_task():
-        first_orchestarte_dag()
+    trigger_first_dag = TriggerDagRunOperator(
+        task_id='trigger_first_orchestrator_dag',
+        trigger_dag_id="first_orchestarte_dag",
+        wait_for_completion=True
+    )   
+    trigger_second_dag = TriggerDagRunOperator(
+        task_id='trigger_second_orchestrator_dag',
+        trigger_dag_id="second_orchestarte_dag",
+        wait_for_completion=True
+    )
 
-    @task.python
-    def second_orchestarte_task():
-        second_orchestarte_dag()  
-
-    first_orchestarte_task >> second_orchestarte_task
+    trigger_first_dag >> trigger_second_dag
 
 dag_orchestratre_parent()
 
