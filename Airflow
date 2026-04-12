@@ -313,7 +313,7 @@ def dag_orchestratre_parent():
 dag_orchestratre_parent()
 
 ==================================================
-
+In short: DAGs say "run at 2am daily". Assets say "run when this data gets updated by another DAG". Assets let you chain DAGs together without hardcoding dependencies or schedules.
 
 
 
