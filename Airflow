@@ -184,9 +184,135 @@ Incremental Load and Templating
 ================================
 Using data lake its better to manage the incremental loading but in some requirements you need to use the airflow.
 In Airflow to run incremental loading we use the "INTERVAL BASED SCHEDULE" the above schedules are "TRIGGER BASED SCHEDULE".
+==================================
+from airflow.sdk import dag, task
+from pendulum import datetime
+from airflow.timetables.interval import CronDataIntervalTimetable
+
+@dag(
+        schedule=CronDataIntervalTimetable("@daily", timezone="America/New_York"),
+        start_date = datetime(year=2024, month=1, day=1, tz="America/New_York"),
+        end_date=datetime(year=2024, month=1, day=10, tz="America/New_York"),
+        catchup=True   #bakfill 
+)
+def incremental_load():
+
+    @task.python
+    def incremental_data_fetch(**kwargs):
+        date_interval_start = kwargs['data_interval_start']
+        date_interval_end = kwargs['data_interval_end']
+        print(f"Fetching data from {date_interval_start} to {date_interval_end}")
+
+    @task.bash
+    def incremental_data_process():
+        return "echo 'Processing incremental datan from {{ date_interval_start }} to {{ date_interval_end }}'"   #JINJA tempat, and how did it know that date_interval_start and date_interval_end is available? Because it is passed by the dag run context and automatically redered for batch operators.
+
+    fetch_task = incremental_data_fetch()
+    process_task = incremental_data_process()
+    fetch_task >> process_task  
+
+incremental_load()
+==============================================
 
 
 
+from airflow.sdk import dag, task
+from pendulum import datetime
+from airflow.timetables.events import EventsTimetable
+
+special_dates = EventsTimetable(
+    event_dates=[
+    datetime(2026,1,1),
+    datetime(2026,1,15),
+    datetime(2026,1,26),
+    datetime(2026,1,30)
+])
+
+@dag(
+    schedule=special_dates,
+    start_date=datetime(year=2026, month=1, day=1, tz="America/New_York"),
+    end_date=datetime(year=2026, month=1, day=31, tz="America/New_York"),
+    catchup=True
+)
+
+def special_dates_dag():
+    @task.python
+    def special_event_task(**kwargs):
+        execution_date = kwargs['logical_date']
+        print(f"Executing task for special date: {execution_date}") 
+
+    
+    special_event = special_event_task()
+special_dates_dag()
+==================================================
+
+ASSETS 
+======
+Data focuse approach rather than task focused approach. Which is basically meaning full.
+Linkidng the data dependency on the data assets instead of linking dependency on the task.
+Its like when a code pointing top one perticular thing then it becomes a asset.
+Asset under the hood runs a DAG with only one task. Thus is basically a DAG but you have here how to build the dependency between the dags by looking up the datasset focused approach instead of task focused approach.
+=============================
+from airflow.sdk import DAG, task, asset
+from pendulum import datetime
+import os 
+
+
+@asset(
+    schedule = "@daily",
+    url = "/opt/airflow/logs/data/data_extract.txt",   # which is your end goal
+    name = "fetch_data"
+)
+
+def fetch_data(self):
+    os.makedirs(os.path.dirname(self.url), exist_ok=True)  # Ensure the directory exists
+    with open(self.url, 'w') as f:
+        f.write(f"Data extracted on {datetime.now()}")  # Simulate data extraction by writing to a file
+    print(f"Data written to:", {self.url})
+=============================
+The below task will trigger automatically as it is dependent on the previous asset and runtype will be ASSET TRIGGERED.
+from airflow.sdk import DAG, task, asset
+from pendulum import datetime
+import os 
+from asset_13 import fetch_data
+
+
+@asset(
+    schedule = fetch_data,
+    url = "/opt/airflow/logs/data/data_extract.txt",   # which is your end goal
+    name = "fetch_data"
+)
+
+def fetch_data(self):
+    os.makedirs(os.path.dirname(self.url), exist_ok=True)  # Ensure the directory exists
+    with open(self.url, 'w') as f:
+        f.write(f"Data processed successfully")  # Simulate data extraction by writing to a file
+    print(f"Data processed to {self.url}")
+================================
+Whats the difference with ASSET and DAG is?, for example you can have some data validations, testing before triggering assets etc is not possible with DAG.
+
+Orchestration of DAG's
+=================================================
+Ruuning Dag 1 and then DAG 2 ..
+from airflow.sdk import dag, task
+from dag_orchestrate_1 import first_orchestarte_dag
+from dag_orchestrate_2 import second_orchestarte_dag
+
+@dag 
+def dag_orchestratre_parent():
+    @task.python
+    def first_orchestarte_task():
+        first_orchestarte_dag()
+
+    @task.python
+    def second_orchestarte_task():
+        second_orchestarte_dag()  
+
+    first_orchestarte_task >> second_orchestarte_task
+
+dag_orchestratre_parent()
+
+==================================================
 
 
 
