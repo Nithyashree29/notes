@@ -304,12 +304,12 @@ def dag_orchestratre_parent():
     trigger_first_dag = TriggerDagRunOperator(
         task_id='trigger_first_orchestrator_dag',
         trigger_dag_id="first_orchestarte_dag",
-        wait_for_completion=True
+        wait_for_completion=True  # Optional (THis is slow) as it doesnot run task asyncronously(means it can use event loop to run your task). It will not keep your resources loacked.
     )   
     trigger_second_dag = TriggerDagRunOperator(
         task_id='trigger_second_orchestrator_dag',
         trigger_dag_id="second_orchestarte_dag",
-        wait_for_completion=True
+        wait_for_completion=True   # Optional (THis is slow)
     )
 
     trigger_first_dag >> trigger_second_dag
