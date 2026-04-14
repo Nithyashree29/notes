@@ -11,8 +11,10 @@ DBT Canvas - A feature available within DBT cloud. Its like a drag and drop feat
 
 DBT Backbone - DBT Models
 Which are your coding part in your Models. 
+The compute is provided by platforms like Databricks, Snowflake, redshift, big query, cloud etc because DBT is just a transformationlayer.
+Plaftform we use here for DBT is Databricks because of simplicity and free resources and flatform doesnot matter.
 
-
+  
 
 
 
