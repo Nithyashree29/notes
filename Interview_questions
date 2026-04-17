@@ -149,7 +149,121 @@ We need 640 MB to process data and ideally like 3-4 times 640 * 3.5/4 = 2.64GB
 So if the executor has ~2.64GB of memory then only it can process 640MB of your data.
 and explain why also because you have spark pool memory which is 60% of the storage execution memory and where 50% of it is for the storage dfor caching and 50% for execution.
 
+Databricks 
+==========
+Your company is moving multiple datasets from Azure Sources (Azure SQL Database, Azure Blob Storage, and Azure Data Lake STorage Gen2) into Databricks for analytics and machine leaning. The leadership team is concerned about data security lineage and compilance.
+How would you design a data governance architecture to ensure that data ingestion from Azure to Databricks is secure, auditable and compliant.
+Step 1 - Read the data, in order to read the data, need to use UNITY CATALOG and you need to create ACCESS CONNECTOR which is avilable in AZURE, Which will have READ/WRITE permissions to the DB.
+Step 2 - IN Databricks create UNITY METASTORE, while creating the UNITY METASTORE we provide the default storage account to the metastore, which will have the DATALAKE attached to it.
+Step 3 - Now create a EXTERNAL LOCATION - A URL pointing to the perticular location. While creating the external location you pass the ACCESS CONNECTOR.
+  I think under CREDENTIALS is nothing but your ACCESS CONNECTOR.
+Benifit - With the help of UNITY CATALOG, you can perform all the lineage like source of the tables, Auditing, Security, Acess Control etc ....
+NOte - SETTING -> DEVELOPER SETTING -> select tabs for notebooks and files, lakeflow pipeline editor.
 
+Your team stores daily transactions files in a Databricks Volume. Each file contains new and updated tyransactions. You've been asked to design a solution that incrementally reads only new data without reprocessing historical data.
+  How would you implement this using streaming tables in Databricks?
+Note - Streaming tables are build on top of Spark Streaming but a design is bit different.
+Question - how can i setup is it normal tables?, Delta live tables or LAkeflow declarative pipelines. What approach?.
+CATALOG -> create schema -> create volume -> upload your data for testing.
+or CREATE VOLUME catalog.schema.folder
+Approach1 - normal way
+=======================
+df = spark.read.format("csv") \
+      .option('header', 'true') \
+      .option('inferscheam', 'true') \
+      .load('/Volume/<catalog>/<schema>/<folder>')
+
+df = spark.readStream.format("cloudFiles") \
+      .option("cloudFiles.format", "csv")\
+      .option("cloudFiles.schemaLocation", "/Volumes/<catalog>/<schema>/sink_orders/checkpoint")\
+      .option("cloudFiles.schemaEvolutionMode", "rescue")\
+      .option("cloudFiles.maxFilesPerTrigger", "1")
+      .load("/Volumes/dbinterview/source/source_orders")
+df.writeStream.format("delta")\
+  .option("checkpointLocation", "/volume/catalog/schema/foder")\
+  .trigger(once=True)
+  .start("/Volumes/dbinterview/source/sink_orders/checkpoint")\
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=========================================================
 
 
 
