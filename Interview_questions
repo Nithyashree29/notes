@@ -176,17 +176,64 @@ df = spark.read.format("csv") \
 df = spark.readStream.format("cloudFiles") \
       .option("cloudFiles.format", "csv")\
       .option("cloudFiles.schemaLocation", "/Volumes/<catalog>/<schema>/sink_orders/checkpoint")\
-      .option("cloudFiles.schemaEvolutionMode", "rescue")\
+      .option("cloudFiles.schemaEvolutionMode", "rescue")\     #if you use the addnew colum then they might break the downstream schema or downstream flow.
       .option("cloudFiles.maxFilesPerTrigger", "1")
       .load("/Volumes/dbinterview/source/source_orders")
+
+
 df.writeStream.format("delta")\
-  .option("checkpointLocation", "/volume/catalog/schema/foder")\
+  .option("checkpointLocation", "/Volumes/<catalog>/<schema>/sink_orders/checkpoint")\
   .trigger(once=True)
-  .start("/Volumes/dbinterview/source/sink_orders/checkpoint")\
+  .start("/Volumes/dbinterview/source/sink_orders/data")\
 
+Jobs and Pipelines 
+==================
+Ingestion Pipeline, ETL pipeline, Job
 
+Approch 2
+==========
+import dlt
 
+@dlt.table(
+    name = 'inc_table'
+)
+def inc_table():
+    df = spark.readStream.format("cloudFiles")\ 
+         .option("cloudFiles.format", "csv")\
+         .load("/Volumes/dbinterview/source/source_orders")
+    return df
 
+Your team stores daily transaction files in a Databricks Volume. Each file contains new and updates transactions. You.ve been asked to design a solution that incrementally reads only the new data without reprocessing historical data.
+  How would you design this streaming table in Declarative pipeline So that the constraints are enforced at the time of the table creation ratio than handling them later in transformations?
+ 
+import dlt
+
+# Adding Expectations
+rules = {
+  "rule1" : "orderID is NOT NULL",
+  "rule2" : "Quantity > 0",
+  "rule3" : "Price >= 0"
+}
+
+@dlt.table(
+  name = "inc_table"
+)
+@dlt.expect_all(rules)   #its like warning , if you want error then @dlt.expect_all_or_fail, if drop malformed then @dlt.expect_all_or_drop
+
+def inc_table(rules):
+    df = spark.readStream.format("cloudFiles")\
+         .option("cloudFiles.format", "csv")\
+         .load("/Volumes/dbinterview/source/source_orders")
+
+How does Dtabricks Serverless Compute differ from traditional clusters, and what are its advantages?
+Serverless compute says that you dont have to worry about the compute settings , scaling...
+
+How would you handle scenario where multiple concurrent queries are overwhelming a Databricks SQL Warehouse, leading to performance degradation?  
+Databricks recommends a cluster fr every 10 concurrent queries, The maximum number of queries in a queue for all SQL warehouse types is 1000.
+
+What strategies would yu employ to optimize the performance of a Databricks SQL Warehouse handling complex analytical queries?
+Optimize command and Z ordering on datalake which helps in data skipping,
+If you want to get rid of partitions then use LIQUID CLUSTERING.
 
 
 
