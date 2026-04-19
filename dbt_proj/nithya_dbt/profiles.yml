@@ -1,0 +1,11 @@
+nithya_dbt:
+  outputs:
+    dev:
+      catalog: dbt_proj
+      host: xxxx
+      http_path: xxxxx
+      schema: default
+      threads: 1
+      token: xxxxe
+      type: databricks
+  target: dev
