@@ -242,7 +242,7 @@ Under Workspace -> can find REPOS or cam create outside of it aswell.
 Settings -> USER -> Linked accounts -> Add Git Credentials. You can add the git provider as Azuredevops, Github ...
 You also have the Databricks Asset Bundels for CICD -> take a look.
 
-You are working with data Lake ingestion pipekine using lakeflow jobs, The requirement is to process multiple incoming files, each having different schemas and data formats. These files need to be routed and written to different target locations in the data lake.
+You are working with data Lake ingestion pipeline using lakeflow jobs, The requirement is to process multiple incoming files, each having different schemas and data formats. These files need to be routed and written to different target locations in the data lake.
   How would you design and implement a lakeflow job to Dynamically read and sink the incoming files.
 dbutils.widgets.text("file", "")
 file_name  = dbutils.widgets.get("file")
@@ -277,6 +277,35 @@ steps i followed was
   3.1 create a new sql task add the sql file
   3.2 add the for loop and iterate thorugh it using - {{tasks.filelookup.output.rows}}
   3.3 within that it directs to the activity adn it has the dynamic ingestion code and consumes the input from the lookup activity and the poarameter is given here as KEY : file, value : {{input.file}}
+
+You are working on a proof-of-concept project to explore data stored in a lakehouse architecture. The core data is managed in Databricks, but for quick data exploration and analysis, your team wants to query extra data directly from external tools outside Databricks.
+  Explain the concept of lakehouse federation in this contect and describe the benefits and challenges you might face.
+Catalog Explorer -> External data -> (External location, Credentials, Connections (Lakehouse Federation), External Metadata)
+Create the connection with all the required credentials -> creats a Foreign CataLOG
+Diff with Lakehouse Federation and Lakehouse Connect
+Lakehouse Connect - To build your real projects . like migrate the data , Building the physical lakehouse.
+
+You are working as a data engineer on a large-scale data platform using Delta Lake. Your team needs to create multiple copies of a large Delta table to run different data experiments and transformations in parallel, but you want to avaoid duplicating the actual data files to save storage.
+  How would you approach this requiremnet using Delta Lake features?
+Clonning techniques in Delta lake babe
+Deep Clone - Is a clone that copies the source table data to the clone target in addition to the metadata of the existing table. additionally, stream metadata is also cloned such that a stream that writes to the Delta Table can be stopped on a source table and continued on the target of a clone from where it left off.
+A shallow clone - Is the clone that does not copy the data files to the clone target. The table metadata is euivalent to the source. These clones are cheaper to create. And supported for managed table.
+  Dependency - ANy chnage sto the source definitely effects the cloned ones.
+CREATE TABLE catalog.schema.table SHALLOW CLONE <clone source>
+
+Imagin eyou are working as a dataengineer for a company for a company that has multiple business units, each with its own Unity Matastore in databricks. These units need to securely and efficiently share subsets of their data with each other without duplicating data.
+    How would you design a solution to enable seamless data sharing across these multiple Unity Metastore
+I Unity catalog you annot directly share data with other unity metastore.
+DElta sharing - Which allows to share the data between two different meta store.
+1. Databricks Open Source Delta Sharing.
+2. Databricks to Databricks  Delta Sharing** - you can create recipient
+Since you can query from other metastore this is often called Foreign Catalog.
+
+
+
+
+
+ 
 
 
 
