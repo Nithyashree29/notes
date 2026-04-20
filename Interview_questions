@@ -244,8 +244,39 @@ You also have the Databricks Asset Bundels for CICD -> take a look.
 
 You are working with data Lake ingestion pipekine using lakeflow jobs, The requirement is to process multiple incoming files, each having different schemas and data formats. These files need to be routed and written to different target locations in the data lake.
   How would you design and implement a lakeflow job to Dynamically read and sink the incoming files.
- v
+dbutils.widgets.text("file", "")
+file_name = dbutils.widgets.get("file")
+df = spark.read.format("csv")\  
+        .option("header", "true")\
+        .option("inferschema", "true")\
+        .load(f"/Volumes/catalog/schema/source/source_order/{file_name}.csv")
 
+df.write.format("delta")\
+    .mode("overwrite")\
+    .save(f"/Volumes/catalog/schema/source/dynamic/{file_name}")
+
+SQL query -> SQL file 
+Note - When ever we want to create parameterized queries, create parameterized query in the SQL file .so that you can pass that particular parameter value dynamically.
+
+fileLookup.sql
+createfilelookup.sql
+CREATE TABLE IF NOT EXISTS catalog.schema.fileLookup
+(
+  file string,
+  type string
+)
+
+INSERT INTO catalog.schema.fileLookup
+VALUES
+('productsOrders', '.csv')
+('orders_day1', '.csv')
+steps i followed was 
+1. Create a sql file with query which has file anme and the type - select * from dbt_proj.default.filelookup;
+2. Create a notebook with above code
+3. create a new job 
+  3.1 create a new sql task add the sql file
+  3.2 add the for loop and iterate thorugh it using - {{tasks.filelookup.output.rows}}
+  3.3 within that it directs to the activity adn it has the dynamic ingestion code and consumes the input from the lookup activity and the poarameter is given here as KEY : file, value : {{input.file}}
 
 
 
