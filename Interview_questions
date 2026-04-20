@@ -233,7 +233,18 @@ Databricks recommends a cluster fr every 10 concurrent queries, The maximum numb
 
 What strategies would yu employ to optimize the performance of a Databricks SQL Warehouse handling complex analytical queries?
 Optimize command and Z ordering on datalake which helps in data skipping,
-If you want to get rid of partitions then use LIQUID CLUSTERING.
+If you want to get rid of partitions then use LIQUID CLUSTERING. Dynamically changes based on query.
+
+You have just started a new data engineering project on databricks that involves multiple team members collaborating on notebooks and code. To ensure proper version control and seamless collaboration, you want t initialize the databricks workspace as a Git repository.
+  How would you approach setting up a Git integration in Databricks?
+Under Workspace -> can find REPOS or cam create outside of it aswell.
+
+Settings -> USER -> Linked accounts -> Add Git Credentials. You can add the git provider as Azuredevops, Github ...
+You also have the Databricks Asset Bundels for CICD -> take a look.
+
+You are working with data Lake ingestion pipekine using lakeflow jobs, The requirement is to process multiple incoming files, each having different schemas and data formats. These files need to be routed and written to different target locations in the data lake.
+  How would you design and implement a lakeflow job to Dynamically read and sink the incoming files.
+ v
 
 
 
