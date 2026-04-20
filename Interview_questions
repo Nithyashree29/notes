@@ -245,7 +245,7 @@ You also have the Databricks Asset Bundels for CICD -> take a look.
 You are working with data Lake ingestion pipekine using lakeflow jobs, The requirement is to process multiple incoming files, each having different schemas and data formats. These files need to be routed and written to different target locations in the data lake.
   How would you design and implement a lakeflow job to Dynamically read and sink the incoming files.
 dbutils.widgets.text("file", "")
-file_name = dbutils.widgets.get("file")
+file_name  = dbutils.widgets.get("file")
 df = spark.read.format("csv")\  
         .option("header", "true")\
         .option("inferschema", "true")\
