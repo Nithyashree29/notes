@@ -447,6 +447,24 @@ df.write.format("delta")\
 Special counter question, why is the need of using OPTIMIZE when we use optimizeWrite while writing ?
   LETS think a pipeine writes to delta lake very often and by the end of the day definitely multiple files and to  toptimize we have to use OPTIMIZE <table_name? , so combination of both is the best.
 
+Q3 - How does Spark's Unified Mmeory Manager allocate memory between execution memory and storage memory in this scenaro?
+  How does Spark reallocate memory dynamically when execution needs more memory, and what happens to cached data during this process?
+During the memory full in execution memory it cna be moved to the storage memory as well when space available.
+When storage is already full and but execution memory needs some memory then execution memory takes precedence and the other blocks in the storage memory gets evicted based on LRU (Least Recent UsED).
+If more than the capacity ofthe storage exceeded even after utilizing the storage memory then it will spill to disk.
+
+Q4- Your team receives event data as files landing continously in cloud storage. The source team sometimes adds new columns or changes the schema without prior notice.
+You need to process these files in near-real time and load into Delta Tab;e without breaking the pipeline. How would you design this streaming solution to handle schema changes safely? What Spark/Databricks features would you use?
+Spark structured Streaming + AUTOLOADER 
+Main point tonote is in spark strcutured streaming we has the "checkpoint location" and in Autoloader we have additiobal "Schema Location".
+It will automatially manages it , the main purposse of checkpoint is "IDENPOTENCY", which is exactly once.
+
+What is the schema changes form source, that is where schema location comes in? 
+  Schema once stored in Schema location, it will be cached as well and provides the info to autoloader, when new schema changes it goes to autoloader thinking that no schema changed but autoloader throws an error with UNKOWNFIELDEXCEPTION , then you dont have to change anything just rerun the code then the cached schema and schema is changed.
+Even before the stream throws the error ,Autoloader performs schema inference on the latest micro-batch of the data and updates the schema location with the latest schema by mergng new columns to the end of the schema. The data types of existing columns remain unchanged.
+Databricks recommends configuring Autoloader streams with Lakeflow jobs to restart automatically after such schema changes.
+
+It supports multiple modes addNewColumns, Rescue, failOnNewColumns, None
 
 
 
