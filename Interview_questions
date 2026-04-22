@@ -353,7 +353,100 @@ CREATE TABLE catalog.schema.table
 )
 CLUSTER BY AUTO
 successssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
- 
+
+
+==============================================
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+# While ingesting data from an external source, you notice duplicate entries. How would you remove duplicates ad retain only the latest entry based on a timestamp column?
+data = [("101", "2023-12-01", 100), ("101", "2023-12-02", 150),("102", "2023-12-01", 200), ("102", "2023-12-02", 250)]
+columns = ["product_id", "date", "sales"]
+df = spark.createDataFrame(data, columns)
+#Casting date col from string to date col
+df = df.withColumn('date', col('date').cast(DateType()))
+# df = df.withColumn('date', to_date(col('date')))
+#Drop duplicates
+df = df.orderBy('product_id', 'date', ascending = [1,0]).dropDuplicates(subset=['product_id'])
+df.display()
+
+# while processing data from multiple files with inconsistent schemas, you need to merge them into a single DataFrame. How would you handle the inconsistency in PySpark?
+df = spark.read.format('parquet')\
+    .option('mergeSchema', 'true')\
+    .load('<path>')
+df.display()
+
+What are the key differneces between Spark and Hadoop MApreduce in terms of performance and scalability.
+Hadoop map reduce was the framework that we were using to process our data in parallel. Two components map and reduce and This map is the process in which our data was being distributed among nodes among machines among cluster of machines and reduce is the process in which we were aggregating the data and combining the data and storing the data in the distributed file system. And this map step was actually writing all the intermediate data to the disk for everything transformation everything and data is being stored to disk .and this reduce step should go to disk to collect the data. Spark actually stat processing the data in memory.
+
+But still spark writes data to the disk ? Yes it writes the data to the disk but only when the data is not fitting in the memory and only when we say to write the data to the disk and it is still faster compared to map reduce Map reduce is ment for batch processing but spark is ment for both batch and streaming processing. Map reduce is not good for interactive queries and spark is good for interactive queries.
+
+
+#You are working with a real-time data pipelines, amd you notice missing values in you streaming data column - Catagory.How would you handle null or missing value in such a scenario?
+df_stream = spark.readStream.schema("id INT, value STRING").csv("path/to/stream")
+df = df_stream.fillNa({'Catagory': 'N/A'})
+
+#You need to calculate the otal number of actions performed by users in a system. How would you calculate the top 5 most active users based on this information?
+data = [("user1", 5), ("user2", 8), ("user3", 2), ("user4", 10), ("user2", 3)]
+columns = ["user_id", "actions"]
+
+df = spark.createDataFrame(data, columns)
+df = df.withColumn('actions', col('actions').cast(IntegerType()))
+df = df.groupBy('user_id').agg(sum('actions').alias('total_actions')).orderBy('total_actions', ascending = False).limit(5)
+df.display()
+
+
+# While processing sales transaction data, you need to identify the most recent transactions for each customer.How would you approach this task?
+from pyspark.sql.window import Window
+data = [("cust1", "2023-12-01", 100), ("cust2", "2023-12-02", 150),("cust1", "2023-12-03", 200), ("cust2", "2023-12-04", 250)]
+columns = ["customer_id", "transaction_date", "sales"]
+
+df = spark.createDataFrame(data, columns)
+df = df.withColumn('transaction_date', col('transaction_date').cast(DateType()))
+df = df.withColumn('flag', dense_rank().over(Window.partitionBy('customer_id').orderBy(col('transaction_date').desc()))).filter(col('flag') == 1)
+df.display()
+# Window function apply transforations at row level and give us the right index to where ever you want to go..
+
+from pyspark.sql import *
+df = spark.readStream.format('cloudfiles') \
+        .option('cloudfiles.format', 'parquet')\
+        .option('cloudfiles.schemaLocation', 'abfss://mycontainer@storagenmae.dfs.core.windows.net/autosink/check')
+
+df.writeStream.format('parquet')\
+        .option('checkpointLocation', 'abfss://mycontainer@storagenmae.dfs.core.windows.net/autosink/check')\
+        .trigger(processingTime = '10 seconds')\
+        .start('abfss://mycontainer@storagename.dfs.core.windows.net/autosink/data')
+
+==============================================
+Q1 - You have a spark job that needs to process 10GB of data. How would you decide the number of cores and memory per executor for this job? Explain your reasoning.
+Reserved Memory - 300 MB
+User Memory - 40% (4GB - 300MB)
+Executor memory/Spark Pool Memroy/ Unified Mmeory - 60% (6GB - 300 MB)     
+      Storage Memory - Caching.
+      Execution Memory 
+10GB = 80 Partitiones, 128MB for 1 partitions (1GB = 8 partitions)
+WE woud need atlest 80 cores.
+1 Partition = 1 task = 1core.
+
+Assume 1 Executor has 8 cores, so in total 10 Executores and each can process 1 GB of data.
+And since Execution memopry is 30 % 
+So atleast we need 3GB of memory per executor, safer 3.5 times based on spark pool memory allocation.
+
+Q2 - You are working as a Data Engineer in a company where daily ingestion jobs write into a Data Lake (Delta/Parquet). Over time, the storage is filled with thousands of samll files, causing slow query performance and high job runtimes.
+  How would you tackle the small file problem:
+    1. While writing the data into Data Laake
+    2. After the data is already written?
+OPTIMIZE COMMAND IN THE DELTA LAKE
+OPTIMIZE <table_name>
+All the files will be coalesce, i think it will be 1GB in size.
+** If you want to tackle the problem while writing the data you can use **" OPTIMIZE WRITE " it will coalesce the partition before writing.
+
+df.write.format("delta")\
+    .option("optimizeWrite", True)\
+    .mode("append")\
+
+Special counter question, why is the need of using OPTIMIZE when we use optimizeWrite while writing ?
+  LETS think a pipeine writes to delta lake very often and by the end of the day definitely multiple files and to  toptimize we have to use OPTIMIZE <table_name? , so combination of both is the best.
+
 
 
 
