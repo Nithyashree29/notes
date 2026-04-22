@@ -301,7 +301,7 @@ DElta sharing - Which allows to share the data between two different meta store.
 2. Databricks to Databricks  Delta Sharing** - you can create recipient
 Since you can query from other metastore this is often called Foreign Catalog.
 
-
+a
 
 
 
