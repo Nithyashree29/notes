@@ -301,10 +301,58 @@ DElta sharing - Which allows to share the data between two different meta store.
 2. Databricks to Databricks  Delta Sharing** - you can create recipient
 Since you can query from other metastore this is often called Foreign Catalog.
 
-a
+Imagine you are working fora financial services company that stores sensitive customer information personally identifiable information (PII) suh as social security numbers, credit card details, and addresses. Your data engineering team needs to provde data access to the analytics team for reporting urposes, but they must ensure that sensitive PII data is protected and not exposed in the reports.
+    How would you approach securing the PII data before sharing it wih the analytics team?
 
+This is the concept of dynamic data masking, we can apply dynamic data masking on the report side aswell, but here it is focused on the lakehpuse level or warehouse level.
+We will create the groups like AD groups, Active Directory groups. 
+Settings -> Identity and access -> GROUPS -> create your group and add members.
+UNITY CATALOG FUNCTION
+CREATE FUNCTION pii_masking(p_address String)
+  RETURN CASE WHEN is_account_group_member('devAdmins') THEN p_address ELSE '*** **** ****' END;
 
+%sql
+ALTER TABLE dbinterview.source.customers
+ALTER COLUMN address SET MASK pii_masking;
 
+You are working as a data engineer for an e-commerce ompany. Your team wants to monitor key business metrics in near real-time using Dtabricks SQL. Specially, you need to send automated alerts when certain conditions are met based oin SQL query results.
+  There i a table daily_sales with columns: sale_date, product_id, units_sold, and revenue. Your manager wants to receive an alert if the total revenue for any product on a given day drops below $1000.
+SETTINGS -> NOTIFICATIONS -> NOTIFICATION DESTINAION -> ADD DESTINATION (username, type, email)
+
+QUERY Notebook
+CREATE TABLE orders (
+  id INT,
+  p_id INT,
+  amount INT
+ );
+
+INSERT INTO orders VALUES (1,1,10), (2,1,20), (3,1,100) ....
+
+SELECT SUM(amount) as toal sales FROM orders;
+
+ GOTO -> ALERTS -> start tyoing the condition
+SELECT SUM(amount) as total_sales FROM catalog.schemd.orders;
+under the condition add the condition and then set the alerts and schedule and NOTIFY.
+You can also add cherry on top like table name etc...
+just like how you do in ADF like run id, task name, error details...
+
+You are working on a Databricks project where a Delta table is used to store streaming ingestion data. oVER time, you notice that the table has thousands of small files due to frequent micro-batch writes. This has started down queries and inceasing job execution times.
+  How would you identify this small file problem, and what steps would you take to optimize the table's performance without interrupting ongoing ingestion?
+Since you are not writing to the database and you are writing in the form of files the number of files increases based on the ingestions.
+Optimize and Zordering - sort the data within the partitions and overall partition level as well so that it can do data skipping usng column statistics.
+
+OPTIMIZE catalog.schema.source.orders ZORDER BY(id)
+counter question - hey lets say the table is not created yet , planning for a bnew table, What strategies we should follow and what is that particular optimizaion technique you should be applying on that particular table.
+So go with liquid clustering instead of Zordering and Optimize because it is basically use dfor existing tables.
+CREATE TABLE catalog.schema.table
+(
+  id INT,
+  name STRING,
+  price DECIMAL(10,2),
+  catagory STRING
+)
+CLUSTER BY AUTO
+successssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
  
 
 
