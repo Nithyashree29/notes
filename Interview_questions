@@ -464,8 +464,16 @@ What is the schema changes form source, that is where schema location comes in?
 Even before the stream throws the error ,Autoloader performs schema inference on the latest micro-batch of the data and updates the schema location with the latest schema by mergng new columns to the end of the schema. The data types of existing columns remain unchanged.
 Databricks recommends configuring Autoloader streams with Lakeflow jobs to restart automatically after such schema changes.
 
-It supports multiple modes addNewColumns, Rescue, failOnNewColumns, None
-
+It supports multiple modes addNewColumns (default) , Rescue, failOnNewColumns, None
+(spark.resdStream.format("cloudFiles")
+                        .option("cloudFiles.format", "parquet")
+                        .option("cloudFiles.schemaLocation", "<path-to-checkpoint>")
+                        .option("cloudFiles.schemaEvolutionMode", "rescue")\
+                        .load("<path-to-source-data")
+                        .writeStream.format("delta")
+                        .option("checkpointLocation", "<path-to-checkpoint>")
+                        .start("<path_to_target"))
+                        
 
 
 
