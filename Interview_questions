@@ -474,6 +474,11 @@ It supports multiple modes addNewColumns (default) , Rescue, failOnNewColumns, N
                         .option("checkpointLocation", "<path-to-checkpoint>")
                         .start("<path_to_target"))
                         
+Q5 - Your team is building a data platform on Databricks.
+  Daily ETL jobs run once a day and finish in 20-30 minutes
+  Ad-hoc analysis is done by data engineers and analysts throughout the day.
+  Cost Optimization and cluster stability are important
+How would the architecture differ if you use serverless compute vs All-Purpose Compute for this setup? Which workloads would you place on each and why?
 
 
 
