@@ -479,7 +479,32 @@ Q5 - Your team is building a data platform on Databricks.
   Ad-hoc analysis is done by data engineers and analysts throughout the day.
   Cost Optimization and cluster stability are important
 How would the architecture differ if you use serverless compute vs All-Purpose Compute for this setup? Which workloads would you place on each and why?
+Characteristics of All-clusters
+===============================
+You manage clusters - starts/stop, sizing, auto-scaling policies.
+Separate clusters for different workloads to avoid interference.
+Cost model - Pay for compute while clusters are running (even idle)
+Stability - Predictable, but requires tning for performance/cost.
+Complexity - Highe operational overhead.
 
+Chracterstics of serverless
+============================
+Unified for all workloads
+Databricks manage ompute - No cluster creation/configuration
+Unified pool - Same compute handles ETL and ad-hoc
+Cost model - Pay only for actual compute usage
+Stability - Autmatic scaling, no resource contention issues
+Complexity - Lower operational overhead (No cluster tuning)
+Daily ETLK jobs (20-30 min, once/day)
+serverless - Cost optimization - no idle cluster costs. Pau only for the 20-30 min runime, No cluster management, job runs on-demand, Autoscales for the workload, no resource conflists, handles data volumes spil=kes automatically.
+All Purpose - Alternate if needed, Use if you custom cluster configs, cost risk- cluster might run longer than needed, or you pay for idle time if you keeo warm, Management overhead - need to schedule start/stop or use job clusters.
+Ad-Hoc ANalysis (ThROUghout the day)
+Serverless - instant scaling - analysis get compute imeediately. no waiting for clusters to start, Cost Optimization - Pay only when notebooks/queries are running. Stabikity - No resource contention between usrs, User experience - Seam less for data exploration prototyping.
+All purpose - ALternate for heavy workloads - use for long running, compute-intensive analysis, Cost risk - if cluster is always-on , high idle costs during off-hours, management - Need to size fpr peak usage, leading to over-provisioning.
+
+Cost and STability Comparision
+===============================
+Cost for ETL 
 
 
 
