@@ -504,9 +504,25 @@ All purpose - ALternate for heavy workloads - use for long running, compute-inte
 
 Cost and STability Comparision
 ===============================
-Cost for ETL 
+Aspect	Serverless Compute	All-Purpose Compute
+Cost for ETL	~$0.50-1.50 per job (20-30 min)	$5-20+ per day (if cluster kept warm)
+Cost for Ad-Hoc	Pay per query/notebook session	Pay for entire cluster uptime
+Stability	Excellent (auto-managed)	Good (but requires tuning)
+Setup Time	0 minutes	15-60 minutes per cluster
+Scaling	Automatic	Manual/auto-scaling policies
+Best For	Variable, unpredictable workloads	Predictable, steady workloads
 
 
+Go with Serverless Compute for everything.
+
+ETL jobs: Schedule them as Databricks Jobs on serverless compute. They'll spin up, run for 20-30 min, and shut down — minimal cost.
+Ad-hoc analysis: Use serverless notebooks for data exploration. Analysts can start working instantly without cluster waits.
+Why this setup? Your workloads are short/bursty (ETL) and variable (ad-hoc), which is serverless's sweet spot. Cost savings will be significant vs managing all-purpose clusters.
+When to consider All-Purpose:
+
+If you have very large ETL jobs (>2 hours) that need specific hardware optimizations
+If you need GPU instances for ML workloads
+If you're in a region where serverless isn't available yet
 
 
 
