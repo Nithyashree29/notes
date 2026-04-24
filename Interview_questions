@@ -525,6 +525,593 @@ If you need GPU instances for ML workloads
 If you're in a region where serverless isn't available yet
 
 
+*************************************************************************************
+10 GB data ÷ 128 MB/partition = 80 partitions → need 80 cores total
+
+Assume 10 Executors, each with 8 cores:
+  10 × 8 = 80 cores ✓  (1 core handles 1 partition at a time)
+
+Memory per Executor:
+  8 cores × 128 MB = 1 GB active data per executor
+  Rule of thumb: 3–5× active data = ~3.5 GB Spark pool memory
+
+  ┌─────────────────────────────────┐
+  │     Executor Container (6 GB)   │
+  ├─────────────────────────────────┤
+  │ Reserved Memory        = 300 MB │
+  │ User Memory (40%)      = 2.3 GB │  ← UDFs, internal metadata
+  │ Spark Pool Memory (60%)= 3.4 GB │
+  │   ┌───────────┬───────────┐     │
+  │   │ Storage   │ Execution │     │
+  │   │ (Cache)   │ (Shuffle) │     │
+  │   │   50%     │    50%    │     │
+  │   └───────────┴───────────┘     │
+  └─────────────────────────────────┘
+
+Final Config:
+  --num-executors 10
+  --executor-cores 8
+  --executor-memory 6g
+Executor Memory = (Active Data per Executor × 3.5) / 0.6 + 300MB
+
+While Writing (Prevention)
+# Option A: optimizeWrite (Databricks Delta)
+df.write.format("delta") \
+  .option("optimizeWrite", True) \
+  .mode("append") \
+  .saveAsTable("my_table")
+
+# Option B: Coalesce/Repartition before write
+df.coalesce(10).write.format("parquet").save("/path")
+
+# Option C: maxRecordsPerFile
+df.write.option("maxRecordsPerFile", 1000000).save("/path")
+
+After Writing (Compaction)
+-- Delta Lake OPTIMIZE command (compacts small files into ~1GB files)
+OPTIMIZE my_table;
+
+-- With Z-ORDER for query-specific optimization
+OPTIMIZE my_table ZORDER BY (date, region);
+
+BEFORE OPTIMIZE:              AFTER OPTIMIZE:
+┌────┐┌────┐┌────┐┌────┐     ┌──────────────────┐
+│1MB ││2MB ││0.5M││3MB │ ──► │  ~1GB Compacted   │
+└────┘└────┘└────┘└────┘     └──────────────────┘
+┌────┐┌────┐┌────┐           ┌──────────────────┐
+│4MB ││1MB ││2MB │       ──► │  ~1GB Compacted   │
+└────┘└────┘└────┘           └──────────────────┘
+  Thousands of small files      Few large files
+
+Q3: Unified Memory Manager — Dynamic Allocation
+Spark uses a soft boundary between Execution and Storage memory. Both share the Unified Memory pool (60% of JVM heap minus 300MB reserved)
+
+Scenario 1: NORMAL — Both have enough
+┌─────────────────────────────────────┐
+│  Execution Memory  │ Storage Memory │
+│       50%          │     50%        │
+│                    │  (cached DFs)  │
+├────────────────────┤────────────────┤
+│          Soft Boundary              │
+└─────────────────────────────────────┘
+
+Scenario 2: Execution needs MORE → evicts cached data (LRU)
+┌─────────────────────────────────────┐
+│  Execution Memory ──────►│ Storage  │
+│       70%                │   30%    │
+│  (borrows from storage)  │ (evicted)│
+│                          │  LRU     │
+└─────────────────────────────────────┘
+  Storage data evicted using Least Recently Used
+
+Scenario 3: Execution STILL not enough → Spill to Disk
+┌─────────────────────────────────────┐
+│  Execution Memory ──────────────►│S │
+│       90%                        │10│
+│  Still not enough? SPILL TO DISK │  │
+└─────────────────────────────────────┘
+         │
+         ▼
+  ┌──────────────┐
+  │  Local Disk  │  (shuffle spill)
+  └──────────────┘
+Key Rules:
+
+Execution can evict storage (cached data) using LRU
+Storage cannot evict execution memory
+If execution still isn't enough → spill to disk
+Cached DFs getting evicted = jobs slow down (re-computation needed)
+
+
+Q4: Streaming with Schema Evolution — Autoloader
+df = (spark.readStream
+      .format("cloudFiles")
+      .option("cloudFiles.format", "json")          # or csv, parquet
+      .option("cloudFiles.schemaLocation", "/mnt/schema_loc")
+      .option("cloudFiles.inferColumnTypes", True)
+      .option("cloudFiles.schemaEvolutionMode", "addNewColumns")
+      .load("/mnt/source/events/")
+)
+
+df.writeStream \
+  .format("delta") \
+  .option("checkpointLocation", "/mnt/checkpoint/events") \
+  .option("mergeSchema", True) \
+  .outputMode("append") \
+  .toTable("bronze.events")
+┌──────────┐    ┌────────────┐    ┌───────────────┐    ┌────────────┐
+│  Cloud   │    │            │    │  Schema       │    │  Delta     │
+│  Storage │───►│ Autoloader │───►│  Evolution    │───►│  Table     │
+│ (Source) │    │            │    │  (mergeSchema)│    │(Destination│
+└──────────┘    └─────┬──────┘    └───────────────┘    └────────────┘
+                      │
+               ┌──────┴──────┐
+               │ Checkpoint  │  Tracks which files processed
+               │ + Schema    │  Stores inferred/evolved schema
+               │   Location  │
+               └─────────────┘
+
+Q5: Serverless vs All-Purpose Compute
+Aspect	All-Purpose Compute	Serverless Compute
+Startup	5-10 min cold start	Seconds
+Cost model	Pay while cluster is ON	Pay per query/job
+Best for	Ad-hoc exploration, notebooks	Scheduled ETL, short jobs
+Idle cost	YES (costly if left running)	NO
+Auto-scaling	Manual config	Fully managed
+┌─────────────────────────────────────────────────────┐
+│                   DATABRICKS WORKSPACE              │
+│                                                     │
+│  ┌──────────────────┐    ┌────────────────────────┐ │
+│  │ Daily ETL Jobs   │    │ Ad-hoc Analysis        │ │
+│  │ (20-30 min/day)  │    │ (throughout the day)   │ │
+│  │                  │    │                        │ │
+│  │  ► SERVERLESS    │    │  ► ALL-PURPOSE CLUSTER │ │
+│  │  ► No idle cost  │    │  ► Interactive use     │ │
+│  │  ► Fast startup  │    │  ► Shared among team   │ │
+│  │  ► Job Compute   │    │  ► Auto-terminate=30m  │ │
+│  └──────────────────┘    └────────────────────────┘ │
+│                                                     │
+│  Cloud Storage: AWS S3 / ADLS Gen2 / GCS            │
+└─────────────────────────────────────────────────────┘
+
+ETL Jobs → Serverless (spins up fast, no idle cost, pay only for 20-30 min)
+Ad-hoc Analysis → All-Purpose with auto-termination (analysts need interactive notebooks)
+
+Q6: Revenue Drop Alert in Databricks
+Approach: Databricks SQL Alert + Webhook/Email
+
+-- Step 1: Create a SQL query that checks revenue drop
+WITH daily_revenue AS (
+  SELECT date, SUM(revenue) AS total_revenue
+  FROM sales_table
+  GROUP BY date
+),
+comparison AS (
+  SELECT
+    date,
+    total_revenue,
+    LAG(total_revenue) OVER (ORDER BY date) AS prev_day_revenue,
+    ROUND((total_revenue - LAG(total_revenue) OVER (ORDER BY date))
+      / LAG(total_revenue) OVER (ORDER BY date) * 100, 2) AS pct_change
+  FROM daily_revenue
+)
+SELECT * FROM comparison
+WHERE pct_change < -10
+ORDER BY date DESC
+LIMIT 1;
+┌────────────┐     ┌──────────────┐     ┌────────────┐     ┌──────────┐
+│ Sales Delta│────►│ Scheduled    │────►│ Databricks │────►│ Email /  │
+│   Table    │     │ SQL Query    │     │ SQL Alert  │     │ Slack    │
+│            │     │ (runs every  │     │ (triggers  │     │ Webhook  │
+│            │     │  15 min)     │     │ if rows>0) │     │          │
+└────────────┘     └──────────────┘     └────────────┘     └──────────┘
+Steps in Databricks UI:
+
+Create the SQL query above in Databricks SQL Editor
+Go to Alerts → Create Alert → link to the query
+Condition: "If query returns rows" → trigger
+Notification: Add email destinations or Slack webhook
+Schedule the alert to run every 15 or 30 minutes
+
+
+Q7: Reusable SQL with Widgets (No-Code for Business Users)
+Solution: Databricks Widgets (Parameters)
+-- Step 1: Create widgets (dropdown/text inputs)
+CREATE WIDGET TEXT start_date DEFAULT '2026-01-01';
+CREATE WIDGET TEXT end_date DEFAULT '2026-12-31';
+CREATE WIDGET DROPDOWN country DEFAULT 'India'
+  CHOICES SELECT DISTINCT country FROM sales_table;
+
+-- Step 2: Use widgets in the query
+SELECT product, country, SUM(revenue) AS total_revenue
+FROM sales_table
+WHERE date BETWEEN getArgument('start_date') AND getArgument('end_date')
+  AND country = getArgument('country')
+GROUP BY product, country
+ORDER BY total_revenue DESC;
+
+# PySpark equivalent
+dbutils.widgets.text("start_date", "2026-01-01")
+dbutils.widgets.text("end_date", "2026-12-31")
+dbutils.widgets.dropdown("country", "India", ["India","US","UK"])
+
+start = dbutils.widgets.get("start_date")
+end = dbutils.widgets.get("end_date")
+country = dbutils.widgets.get("country")
+
+df = spark.sql(f"""
+  SELECT product, SUM(revenue) as total
+  FROM sales_table
+  WHERE date BETWEEN '{start}' AND '{end}' AND country='{country}'
+  GROUP BY product
+""")
+
+┌───────────────────────────────────────────────────┐
+│              DATABRICKS NOTEBOOK                  │
+│  ┌─────────────────────────────────────────────┐  │
+│  │  [Start Date: 2026-01-01 ▼]                 │  │
+│  │  [End Date:   2026-03-31 ▼]                 │  │
+│  │  [Country:    India       ▼]                │  │
+│  │            [▶ Run All]                      │  │
+│  └─────────────────────────────────────────────┘  │
+│                                                   │
+│  Business users just change dropdowns & click Run │
+└───────────────────────────────────────────────────┘
+
+Q8: Unity Catalog Architecture
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     UNITY METASTORE                             │
+│               (One per region, shared across workspaces)        │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │  DEV         │  │  TEST        │  │  PROD        │          │
+│  │  Workspace   │  │  Workspace   │  │  Workspace   │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         └──────────────────┼──────────────────┘                 │
+│                            ▼                                    │
+│  3-Level Namespace:  catalog.schema.table                       │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────┐        │
+│  │  Catalog: prod_catalog                              │        │
+│  │  ├── Schema: bronze                                 │        │
+│  │  │   ├── Table: raw_events                          │        │
+│  │  │   └── Table: raw_transactions                    │        │
+│  │  ├── Schema: silver                                 │        │
+│  │  │   ├── Table: cleaned_events                      │        │
+│  │  │   └── Table: cleaned_transactions                │        │
+│  │  └── Schema: gold                                   │        │
+│  │      ├── Table: daily_revenue                       │        │
+│  │      └── Function: fx_calc_tax()                    │        │
+│  └─────────────────────────────────────────────────────┘        │
+│                                                                 │
+│  Access Control:                                                │
+│  ├── Table-level: GRANT SELECT ON table TO group               │
+│  ├── Column-level: Column masking (MASK function)              │
+│  ├── Row-level: Row filters (WHERE clause filters)             │
+│  └── Audit: All access logged centrally                        │
+│                                                                 │
+│  Storage:  ADLS Gen2 / S3 (Managed or External locations)      │
+└─────────────────────────────────────────────────────────────────┘
+
+Key Components:
+
+Metastore: Top-level container, one per region, attached to workspaces
+Catalog: Logical grouping (e.g., dev, prod, analytics)
+Schema: Database-level grouping under catalog
+Tables/Views/Functions: Actual objects
+Storage Credentials + External Locations: Govern cloud storage access
+Grants: GRANT SELECT ON catalog.schema.table TO group_name
+Lineage: Auto-tracked across notebooks and jobs
+
+
+Q9: SQL Warehouse Scaling for BI Dashboards
+Choose: Serverless SQL Warehouse
+
+Feature	Classic	Pro	Serverless
+Startup	~10 min	~10 min	Seconds
+Auto-scale	Yes	Yes	Yes (fastest)
+Scale-to-zero	No	No	Yes
+Cost at night	Paying	Paying	$0
+Query queuing	Yes	Better	Instant scaling
+
+BUSINESS HOURS (9 AM - 6 PM):
+┌────────────────────────────────────────┐
+│  Serverless SQL Warehouse              │
+│  ┌──────┐┌──────┐┌──────┐┌──────┐     │
+│  │Clust1││Clust2││Clust3││Clust4│     │  ◄── Auto-scales UP
+│  └──────┘└──────┘└──────┘└──────┘     │      (hundreds of users)
+│  Queries distributed across clusters   │
+└────────────────────────────────────────┘
+
+NIGHT (6 PM - 9 AM):
+┌────────────────────────────────────────┐
+│  Serverless SQL Warehouse              │
+│               (idle)                   │  ◄── Scales to ZERO
+│            $0 cost                     │      (no users)
+└────────────────────────────────────────┘
+
+Serverless auto-scales by adding clusters (not just nodes). Each cluster handles concurrent queries. When load drops, clusters are removed — all the way to zero.
+
+Ques10: Your company has a Databricks Lakehouse with Delta tables for sales, customers,
+and transactions.
+Business users (non-technical) want to ask questions in plain English like:
+ - “What were last quarter’s top-selling products in Canada?”
+Users
+Solution: Databricks AI/BI Genie Space
+
+┌──────────┐     ┌──────────────────┐     ┌──────────────┐
+│ Business │     │  Genie Space     │     │  Delta       │
+│  User    │────►│  (AI/BI)         │────►│  Tables      │
+│          │     │                  │     │  sales,      │
+│ "Top     │     │ NL → SQL         │     │  customers,  │
+│ products │     │ Translation      │     │  transactions│
+│ in       │     │ (LLM-powered)    │     │              │
+│ Canada?" │     └──────────────────┘     └──────────────┘
+└──────────┘              │
+                          ▼
+                 ┌──────────────────┐
+                 │ Auto-generated   │
+                 │ SQL + Results    │
+                 │ + Visualization  │
+                 └──────────────────┘
+
+Setup Steps:
+
+Create a Genie Space in Databricks AI/BI
+Add the Delta tables (sales, customers, transactions) as data sources
+Provide instructions/context (e.g., "revenue = price × quantity", "fiscal year starts April")
+Share the Genie Space with business users
+Users type plain English → Genie generates SQL → returns results + charts
+
+Q11: Flight Ticket Sales Trend Analysis (PySpark)
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+
+df = spark.table("airline.ticket_sales")
+
+# Daily trend
+daily_trend = (df
+    .groupBy("sale_date")
+    .agg(F.sum("sale_amount").alias("daily_revenue"),
+         F.count("ticket_id").alias("ticket_count"))
+    .orderBy("sale_date")
+)
+
+# Monthly trend
+monthly_trend = (df
+    .withColumn("month", F.date_trunc("month", "sale_date"))
+    .groupBy("month")
+    .agg(F.sum("sale_amount").alias("monthly_revenue"),
+         F.count("ticket_id").alias("ticket_count"))
+    .orderBy("month")
+)
+
+# Moving average (7-day) for smoother trend
+w = Window.orderBy("sale_date").rowsBetween(-6, 0)
+daily_with_ma = daily_trend.withColumn(
+    "7_day_moving_avg", F.avg("daily_revenue").over(w)
+)
+
+daily_with_ma.display()  # Databricks built-in visualization
+
+Q12: Top 5 Airports by Sales Revenue
+from pyspark.sql import functions as F
+
+df = spark.table("airline.ticket_sales")
+
+top_airports = (df
+    .groupBy("airport_code", "airport_name")
+    .agg(F.sum("sale_amount").alias("total_revenue"))
+    .orderBy(F.desc("total_revenue"))
+    .limit(5)
+)
+
+top_airports.show()
+
+Q13: Running Total of Sales per Flight, Reset Monthly
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+
+df = spark.table("airline.ticket_sales")
+
+df = df.withColumn("month", F.date_trunc("month", "sale_date"))
+
+# Window: partition by flight + month, order by date
+w = (Window
+     .partitionBy("flight_id", "month")
+     .orderBy("sale_date")
+     .rowsBetween(Window.unboundedPreceding, Window.currentRow))
+
+result = df.withColumn("running_total", F.sum("sale_amount").over(w))
+
+result.select("flight_id", "sale_date", "month",
+              "sale_amount", "running_total").show()
++----------+----------+-------+------------+--------------+
+|flight_id |sale_date |month  |sale_amount |running_total |
++----------+----------+-------+------------+--------------+
+|FL001     |2026-01-01|2026-01|        500 |          500 |
+|FL001     |2026-01-05|2026-01|        300 |          800 |  ◄ accumulates
+|FL001     |2026-01-20|2026-01|        200 |         1000 |
+|FL001     |2026-02-02|2026-02|        400 |          400 |  ◄ resets!
+|FL001     |2026-02-15|2026-02|        600 |         1000 |
++----------+----------+-------+------------+--------------+
+
+Q14: Revenue Buckets — Tag Cities as High/Mid/Low
+from pyspark.sql import functions as F
+
+df = spark.table("sales_table")
+
+city_revenue = (df
+    .groupBy("city")
+    .agg(F.sum("revenue").alias("total_revenue"))
+)
+
+tagged = city_revenue.withColumn(
+    "tag",
+    F.when(F.col("total_revenue") < 1000, "low")
+     .when(F.col("total_revenue") <= 20000, "mid")
+     .otherwise("high")
+)
+
+tagged.show()
++----------+--------------+----+
+|city      |total_revenue |tag |
++----------+--------------+----+
+|Mumbai    |        25000 |high|
+|Pune      |         5000 |mid |
+|Nashik    |          800 |low |
++----------+--------------+----+
+
+Q15: Dynamic Aggregation (No Hard-Coding
+
+from pyspark.sql import functions as F
+
+# Configuration — change this anytime without touching logic
+agg_config = {
+    "sale_amount": ["sum", "avg"],
+    "quantity":    ["sum", "count"],
+    "discount":   ["max"]
+}
+
+# Build aggregation expressions dynamically
+agg_funcs = {
+    "sum": F.sum, "avg": F.avg, "max": F.max,
+    "min": F.min, "count": F.count
+}
+
+agg_exprs = []
+for col_name, funcs in agg_config.items():
+    for func_name in funcs:
+        agg_exprs.append(
+            agg_funcs[func_name](F.col(col_name)).alias(f"{func_name}_{col_name}")
+        )
+
+# Apply
+df = spark.table("sales_table")
+result = df.groupBy("region").agg(*agg_exprs)
+result.show()
+
+Benefit: Just update agg_config dict — no SQL/code rewrite needed.
+
+Q16: Deletion Vectors in Delta Lake
+Traditional Delete: Rewrites entire Parquet files even to remove 1 row.
+
+Deletion Vectors: Mark rows as deleted in a separate small file — no data files rewritten.
+TRADITIONAL DELETE:                    WITH DELETION VECTORS:
+
+┌──────────┐                          ┌──────────┐  ┌──────────────┐
+│ Parquet1 │  ─── rewrite ──►  new    │ Parquet1 │  │ DeletionVec  │
+│ 100 rows │       entire file        │ 100 rows │  │              │
+│ delete 2 │                          │(untouched│  │ rows: [5,23] │
+└──────────┘                          └──────────┘  │ (bitmap)     │
+┌──────────┐                          ┌──────────┐  │              │
+│ Parquet2 │  ─── rewrite ──►  new    │ Parquet2 │  │ rows: [7]    │
+│ 100 rows │       entire file        │(untouched│  └──────────────┘
+│ delete 1 │                          └──────────┘
+└──────────┘                           
+                                      Read time: Parquet files are
+Cost: Rewrite GBs of data            read but deleted rows are
+      for deleting few rows           SKIPPED using the bitmap
+      Very slow & expensive           
+                                      PURGE later: OPTIMIZE merges
+                                      deletion vectors permanently
+
+How it works under the hood:
+
+DELETE writes a small deletion vector file (bitmap) — not rewriting data
+On read, Spark checks the bitmap and skips deleted rows
+Periodically, OPTIMIZE or PURGE physically removes deleted rows (compaction)
+
+
+-- Enable deletion vectors
+ALTER TABLE my_table SET TBLPROPERTIES ('delta.enableDeletionVectors' = true);
+
+-- Delete is now fast (writes only deletion vector)
+DELETE FROM my_table WHERE user_id = 12345;
+
+-- Later, physically purge
+OPTIMIZE my_table;
+-- or
+REORG TABLE my_table APPLY (PURGE);
+
+Q17: Time Travel — Recover Accidentally Deleted Data
+
+-- Step 1: Check table history to find version before the bad DELETE
+DESCRIBE HISTORY my_table;
++-------+----------+---------------------+-----------+
+|version|operation  |timestamp            |userName   |
++-------+----------+---------------------+-----------+
+|   5   |DELETE     |2026-04-23 10:30:00  |you        |  ◄ BAD delete
+|   4   |WRITE     |2026-04-23 09:00:00  |etl_job    |  ◄ GOOD state
+|   3   |WRITE     |2026-04-22 09:00:00  |etl_job    |
++-------+----------+---------------------+-----------+
+
+-- Step 2: Query the good version to verify
+SELECT * FROM my_table VERSION AS OF 4;
+-- or
+SELECT * FROM my_table TIMESTAMP AS OF '2026-04-23 09:00:00';
+
+-- Step 3: Restore the table
+RESTORE TABLE my_table TO VERSION AS OF 4;
+-- or
+RESTORE TABLE my_table TO TIMESTAMP AS OF '2026-04-23 09:00:00';
+
+# PySpark equivalent
+df = spark.read.format("delta").option("versionAsOf", 4).table("my_table")
+
+# Or restore
+from delta.tables import DeltaTable
+dt = DeltaTable.forName(spark, "my_table")
+dt.restoreToVersion(4)
+
+Key: Delta keeps history for 30 days by default (delta.logRetentionDuration). VACUUM removes old files, so don't VACUUM before restoring.
+
+Q18: Liquid Clustering vs Traditional Partitioning
+Problem with Partitioning:
+
+Partitioned by date → but queries now filter on customer_id and region
+Must drop + repartition = table rewrite (2-3 TB!)
+High cardinality columns → thousands of tiny partitions → small file problem
+Liquid Clustering:
+
+No rigid folder structure
+Data is incrementally re-clustered on write/OPTIMIZE
+Can change clustering keys anytime without rewriting the whole table
+
+TRADITIONAL PARTITIONING:              LIQUID CLUSTERING:
+(folder-based, rigid)                  (file-level, flexible)
+
+/table/date=2026-01-01/                /table/
+  ├── part-001.parquet (1MB)  SMALL!     ├── file-001.parquet (1GB)
+  ├── part-002.parquet (2MB)  SMALL!     │   (clustered by customer_id,
+/table/date=2026-01-02/                  │    region - data sorted
+  ├── part-001.parquet (1MB)  SMALL!     │    within files)
+  ├── ...                                ├── file-002.parquet (1GB)
+/table/date=2026-01-03/                  ├── file-003.parquet (1GB)
+  ├── ...                                └── ...
+  
+10,000 partitions                      Data is CLUSTERED not PARTITIONED
+= 10,000+ small files                 Optimally sized files (~1GB)
+-- Enable Liquid Clustering (new table)
+CREATE TABLE my_table (...)
+CLUSTER BY (customer_id, region);
+
+-- Change clustering keys (NO table rewrite!)
+ALTER TABLE my_table CLUSTER BY (region, product_id);
+
+-- Incrementally apply clustering
+OPTIMIZE my_table;
+
+Why Liquid Clustering > Partitioning:
+
+Aspect	Partitioning	Liquid Clustering
+Change keys	Full table rewrite	ALTER TABLE — instant
+High cardinality	Small files explosion	Handled well
+File sizes	Uneven	Optimally sized (~1GB)
+Incremental	No	Yes (only new data)
+Works with	Low cardinality only	Any column
+*****************************************************************************************8
 
 
 
