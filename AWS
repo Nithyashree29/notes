@@ -133,6 +133,24 @@ GLUE ETL Jobs
 2. Data Caatalog
 3. ETL jobs (AWS Glue Studio) -> visual ETL, Notebook interactive way, Script editor.
 
+Take a look at the Redshift serverless babe.
+
+AWS lambda
+==========
+Serverful - infra management is done by you.
+Serverless - pay as you go
+Lambda is serverless
+functions - modular
+
+
+
+
+
+
+
+
+
+
 
 
     
