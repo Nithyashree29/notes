@@ -648,8 +648,27 @@ SLOWLY CHANGING DIMEMSIONS
 Type 0 - No change
 Type 1 - UPSERT
 Type 2 - History
-Type 3 - Adding the previous value when change in the record.
+Type 3 - Adding the previous value when change in the record
 
+import dlt
+
+@dlt.table(comment="Raw order from kafka")
+def bronze_table():
+    return spark.readStream.format("cloudFiles")\
+        .option("cloudFiles.format", "json")\
+        .load("/mnt/raw/orders")
+
+@dlt.table(comment="cleaned orders")
+@dlt.expect_or_drop("valid_amount", "amount > 0")
+def silver_table():
+    return dlt.read_stream("bronze_table")\
+            .select("order_id", "customer_id", "order_confirm_date")
+
+@dlt.table(comment="Daily revenue")
+def gold_table():
+    dlt.read_stream("silver_table")\
+        .groupBy("order_date")\
+        .agg(sum("amount").alias("total_revenue"))
 
 
 
