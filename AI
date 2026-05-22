@@ -3,6 +3,26 @@ Claude - Anthropic
 Models - Haiku, Sonnet,Opus 
 Claude code lives in the terminal, it lives in your system. hence, It can run bash, subprocess commands...
 
+Claude Code : 1. API - pay for what you are using, free, console based.
+2. Subcription based.
+
+In console to switch between the models use, '/' Commands.
+/model
+/login
+
+Developer ToolKit - VS Code, Python
+
+local development
+==================
+pip install UV -> initials git , virtual env etc....
+uv init
+uv sync -> create vm env and sync all dependencies that i would defind in TOML file.
+.venv/scripts/activate
+
+Create the .env file and add the Anthropic API KEY
+ANTROPIC_API_KEY = "YOUR_anthropic_api_key_here"
+
+
 
 
 
