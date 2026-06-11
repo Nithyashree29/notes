@@ -1928,6 +1928,51 @@ Size	Same as source	Tiny (just metadata)
 Independence	Fully independent	Breaks if source files vacuumed
 Use case	Production copy, migration	Testing, experimentation
 
+
+
+
+
+4. Databricks Platform & Architecture
+Q: Lakehouse Architecture?
+
+Combines best of data lakes and data warehouses:
+
+Data Lake: Cheap storage, schema-on-read, raw formats, handles unstructured data. Problem: no transactions, no quality, bad performance.
+Data Warehouse: ACID, schema enforcement, fast queries, governance. Problem: expensive, proprietary, can't handle unstructured data.
+Lakehouse: Open formats (Delta) on cheap cloud storage WITH transactions, schema enforcement, governance, and warehouse-level performance (Photon, caching, indexing).
+Key enabler: Delta Lake provides warehouse features on lake storage.
+
+Q: Control Plane vs Data Plane?
+
+Control Plane (Databricks-managed):
+
+Web UI, APIs, notebook interface
+Job scheduling and orchestration
+Cluster management
+Unity Catalog metadata
+User authentication/authorization
+Located in Databricks' cloud account
+Data Plane (Customer's cloud account):
+
+Compute clusters (VMs running Spark)
+Customer's data in their storage (S3/ADLS/GCS)
+Network infrastructure
+Encryption keys (optionally customer-managed)
+Separation ensures: Customer data never leaves their account, Databricks only manages orchestration.
+
+Q: Unity Catalog — What and Why?
+
+Unified governance solution for all data assets across all Databricks workspaces:
+
+Single place to manage permissions for tables, views, volumes, models, functions
+Cross-workspace — one policy applies everywhere
+Fine-grained access control (table, column, row level)
+Data lineage tracking (automatic)
+Data discovery and search
+Audit logging
+Supports external data (S3, ADLS, GCS)
+Without Unity Catalog: Each workspace had its own Hive metastore, permissions were cluster-level (legacy Table ACLs), no cross-workspace governance.
+
 =========================================================
 
 
