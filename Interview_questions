@@ -1973,6 +1973,71 @@ Audit logging
 Supports external data (S3, ADLS, GCS)
 Without Unity Catalog: Each workspace had its own Hive metastore, permissions were cluster-level (legacy Table ACLs), no cross-workspace governance.
 
+
+Catalog: Top-level container. Usually per environment (dev, staging, prod) or per business unit.
+Schema (Database): Groups related tables/views. Like a traditional database schema.
+Table/View/Function/Volume: The actual data assets.
+
+Q: Metastores in Unity Catalog?
+
+A metastore is the top-level container for Unity Catalog metadata. One metastore per region. Contains:
+
+Catalogs (which contain schemas, which contain tables)
+Storage credentials
+External locations
+Permissions
+Each workspace is assigned to one metastore. Multiple workspaces in the same region can share a metastore.
+
+Q: Hive Metastore vs Unity Catalog?
+
+Hive Metastore (Legacy)	Unity Catalog
+Scope	Per-workspace	Cross-workspace (per-region)
+Governance	Basic Table ACLs	Fine-grained (table, column, row)
+Lineage	None	Automatic
+Assets	Tables, views	Tables, views, volumes, models, functions
+Access control	Cluster-dependent	Centralized, cluster-independent
+External storage	Mounts (broad access)	External locations (scoped access)
+Audit	Limited	Full audit log
+
+Migration path: hive_metastore catalog still accessible for backward compatibility.
+
+Q: Storage Credentials and External Locations?
+Storage Credential: Encapsulates cloud credentials (Azure Service Principal, AWS IAM Role, GCP Service Account) that grant access to cloud storage. Defined once, reused across multiple external locations.
+External Location: Maps a cloud storage path to a storage credential. Grants Unity Catalog permission to access that specific path.
+
+CREATE STORAGE CREDENTIAL my_cred
+WITH (AZURE_MANAGED_IDENTITY = '/subscriptions/.../my-identity')
+
+CREATE EXTERNAL LOCATION my_location
+URL 'abfss://container@account.dfs.core.windows.net/path'
+WITH (STORAGE CREDENTIAL my_cred)
+
+Hierarchy: Storage Credential → External Location → External Table
+
+Q: Managed vs External Tables?
+
+Managed Table:
+
+Data stored in Unity Catalog's managed storage location
+Dropping table deletes both metadata AND data files
+Unity Catalog manages lifecycle completely
+Default when no LOCATION specified
+External Table:
+
+Data stored at user-specified LOCATION (external storage)
+Dropping table deletes only metadata, data files remain
+User manages data lifecycle
+Use when: data shared with non-Databricks systems, need custom storage layout, data produced externally
+
+-- Managed
+CREATE TABLE catalog.schema.t (id INT, name STRING)
+
+-- External
+CREATE TABLE catalog.schema.t (id INT, name STRING)
+LOCATION 'abfss://container@account.dfs.core.windows.net/path/t'
+
+
+
 =========================================================
 
 
