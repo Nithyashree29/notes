@@ -1582,16 +1582,351 @@ Storage (soft guarantee): 3GB
 Execution: 3GB (can grow into storage's 3GB)
 User/overhead: 4GB
 
+Q: Off-heap memory?
+Memory allocated outside the JVM heap, managed directly by Spark/Tungsten. Not subject to garbage collection.
+Benefits: No GC pauses, more predictable performance, can allocate very large memory blocks.
+Trade-offs: Slightly more complex debugging, still limited by system RAM.
+
+Q: Small file problem?
+
+Many small files (< 128MB) cause:
+
+Excessive metadata overhead (file listing)
+Too many tasks (one per file/partition)
+Slow reads (random I/O instead of sequential)
+Cloud storage API rate limits
+Solutions:
+
+coalesce(n) before writing
+repartition(n) for even distribution
+OPTIMIZE on Delta tables (bin-packing)
+Auto Loader with cloudFiles.maxFilesPerTrigger
+spark.sql.files.maxPartitionBytes (merge small files into one partition for reading)
+Set maxRecordsPerFile when writing
+Use Delta Lake's Auto Optimize: delta.autoOptimize.optimizeWrite = true
+
+3. Delta Lake
+Core Concepts
+Q: What is Delta Lake? How different from Parquet?
+
+Delta Lake is an open-source storage layer that brings ACID transactions to data lakes. It stores data as Parquet files BUT adds a transaction log (_delta_log/) that tracks every change.
+
+Feature	Parquet	Delta Lake
+ACID transactions	No	Yes
+Schema enforcement	No	Yes
+Time travel	No	Yes (versioned)
+UPDATE/DELETE/MERGE	No	Yes
+Concurrent writes	Corrupts data	Safe (optimistic concurrency)
+Data skipping	Manual	Automatic (stats in log)
+Audit history	No	Full commit history
+Q: ACID Properties in Delta Lake?
+
+Atomicity: Each commit is all-or-nothing. A write either fully succeeds (all files committed) or fully fails (no partial writes visible).
+Consistency: Schema enforcement prevents writing incompatible data. Constraints (CHECK, NOT NULL) enforced.
+Isolation: Serializable isolation by default. Concurrent readers see a consistent snapshot. Writers use optimistic concurrency control.
+Durability: Once committed, data is in cloud storage (replicated by provider). Transaction log is also in cloud storage.
+
+Q: Transaction Log (_delta_log) — How it works?
+
+The _delta_log/ directory contains JSON files (one per commit) that record every change:
+_delta_log/
+  00000000000000000000.json  # Commit 0: Initial table creation
+  00000000000000000001.json  # Commit 1: Added files
+  00000000000000000002.json  # Commit 2: Deleted files
+  ...
+  00000000000000000010.checkpoint.parquet  # Checkpoint every 10 commits
+Each commit file contains actions:
+
+add: New file added to table (path, size, stats, partition values)
+remove: File logically deleted (tombstone)
+metaData: Schema changes, table properties
+commitInfo: Who, when, what operation
+protocol: Reader/writer protocol version
+Reading: Client reads latest checkpoint + subsequent JSON commits to reconstruct the current table state (which files are "live").
+
+Checkpoints: Every 10 commits (default), a Parquet checkpoint summarizes all active state. Avoids reading hundreds of small JSON files.
+
+Q: Optimistic Concurrency Control?
+
+When two writers try to commit simultaneously:
+
+Writer A reads current table version (v5), computes changes
+Writer B reads current table version (v5), computes changes
+Writer A commits → v6 (succeeds, it's the first)
+Writer B tries to commit → conflict detected (table is now v6, not v5)
+Writer B checks if its changes conflict with Writer A's changes:
+If no overlap (different partitions/files): B retries and commits as v7
+If conflict (same files modified): B fails with ConcurrentModificationException
+Conflict resolution rules depend on isolation level:
+
+WriteSerializable (default): Conflicts only when operations touch same files
+Serializable: Stricter — even reads that could be affected cause conflict
+Q: Two simultaneous writers — what happens?
+
+Depends on what they write:
+
+Different partitions: Both succeed (no conflict on same files)
+Same partition, append-only: Both succeed (adding files never conflicts)
+Same partition, one UPDATE + one UPDATE: First wins, second retries or fails
+MERGE + MERGE on same files: First wins, second gets ConcurrentAppendException and must retry
+DELETE + DELETE on same rows: First wins, second retries (checks if files still exist)
+Q: Checkpoint files in transaction log?
+
+Every 10 commits (configurable via delta.checkpointInterval), Delta writes a .checkpoint.parquet file that consolidates all active add actions and table metadata into one file. Benefits:
+
+Faster table state reconstruction (read 1 Parquet instead of hundreds of JSON files)
+Older JSON files can be cleaned up
+The _last_checkpoint file points to the latest checkpoint
+Multi-part checkpoints exist for very large tables (thousands of files).
+
+Q: Delta Lake vs Iceberg vs Hudi?
+
+Delta Lake	Apache Iceberg	Apache Hudi
+Created by	Databricks	Netflix	Uber
+Best integration	Databricks, Spark	Multi-engine (Spark, Flink, Trino, Presto)	Spark, Flink
+Transaction log	JSON + Parquet checkpoints	Metadata tree (Avro manifests)	Timeline (based on MVCC)
+Strength	Simplicity, Databricks optimizations, streaming	Engine-agnostic, hidden partitioning, partition evolution	Upserts, incremental processing
+Schema evolution	Yes	Yes (more flexible — column ID based)	Yes
+Time travel	Yes	Yes (snapshot-based)	Yes (timeline-based)
+Partition evolution	Limited (must rewrite)	Yes (hidden partitions, evolve without rewrite)	Limited
+Write amplification	Moderate	Low	Varies (CoW vs MoR)
 
 
+Operations
+Q: MERGE, UPDATE, DELETE — How they work internally?
+
+All are copy-on-write operations:
+
+DELETE:
+
+Identify files containing rows to delete (using data skipping stats)
+Read those files, filter out deleted rows
+Write new files with remaining rows
+Commit: remove old files + add new files
+UPDATE:
+
+Identify files containing rows to update (data skipping)
+Read those files, apply updates
+Write new files with updated data
+Commit: remove old files + add new files
+MERGE:
+
+Inner join source with target on merge condition → identifies matched rows
+Anti-join for not-matched rows
+Apply matched actions (UPDATE/DELETE) and not-matched actions (INSERT)
+Write new files for affected partitions
+Commit atomically
+
+With Deletion Vectors (newer): Instead of rewriting entire files, mark deleted rows in a bitmap. Much faster DML on large files.
+MERGE INTO target_table t
+USING source_table s
+ON t.id = s.id
+WHEN MATCHED AND s.op = 'DELETE' THEN DELETE
+WHEN MATCHED AND s.op = 'UPDATE' THEN UPDATE SET
+    t.name = s.name,
+    t.updated_at = s.updated_at
+WHEN NOT MATCHED THEN INSERT (id, name, created_at)
+    VALUES (s.id, s.name, s.created_at)
+WHEN NOT MATCHED BY SOURCE THEN DELETE  -- Delta Lake 2.4+
+
+deltaTable.alias("t").merge(
+    source.alias("s"), "t.id = s.id"
+).whenMatchedUpdate(set={"name": "s.name"}) \
+ .whenNotMatchedInsert(values={"id": "s.id", "name": "s.name"}) \
+ .execute()
+
+Q: Schema Evolution — How to enable?
+df.write.format("delta") \
+  .option("mergeSchema/overwrite", "true") \
+  .mode("append") \
+  .save("path")
+
+deltgaTable.alias("t").merge(source.alias("s"), "t.id = s.id")\
+  .whenNotMathcedInsertaALL()\
+  .withSchemaEvolution() \
+  .execute()
+
+Q: Schema Enforcement?
+
+Delta rejects writes that don't match the table schema. If you try to write a DataFrame with:
+
+Extra columns: Error (unless mergeSchema=true)
+Missing columns: Error
+Different types: Error
+Different nullability: Error if writing non-null to nullable
+This prevents data corruption from schema drift. Configurable per-table.
+
+TIMETRAVEL
+Query historical versions of Delta TABle
+SELECT * FROM my_table VERSION AS OF 5
+SELECT * FROM my_table@v5
+SELECT * FROM my_table TIMESTAMP AS OF '2026-01-01'
+
+df = spark.read.format("delta").option("versionAsOf", 5).load('path')
+df = spark.read.fromat("delta").option("timestampAsOf", '2026-01-01').load("path")
+
+Use cases: Auditing, debugging, undoing bad writes, reproducible ML training.
+Limited by VACUUM — versions older than retention period (7 days default) may be vacuumed.
+
+VACUUM -VACUUM physically deletes files that are no longer referenced by the current table version AND are older than the retention threshold.
+VACUUM my_table retain 168 hours
+VACUUM my_table
+
+What it deletes: Files marked as remove in the transaction log that are older than retention period.
+Why 7-day default: Long-running queries or streams might still reference old files. If you vacuum too aggressively, they'll fail with FileNotFoundException.
+
+SET spark.databricks.delta.retainDurationCheck.enabled = false  -- DANGEROUS
+VACUUM my_table RETAIN 0 HOURS
+Breaks time travel for all historical versions
+Breaks any concurrent readers/queries
+Breaks streaming checkpoints referencing old files
+IRREVERSIBLE — deleted files cannot be recovered
+
+OPTIMIZE - Compacts small files into larger ones (target ~1GB)
+OPTIMIZE my_table
+OPTIMIZE my_table WHERE date = '2026-01-01'
+OPTIMIZE my_table ZORDER BY (column1, columns2)
+
+What it does:
+
+Identifies small files
+Reads and rewrites them into fewer, larger files (bin-packing)
+Commits new files, marks old ones for removal
+Does NOT change the data. Run regularly (e.g., nightly) for tables with frequent small writes.
+
+ALTER TABLE my_table SET TBLPROPERTIES (
+  'delta.autoOptimize.optimizeWrite' = 'true',
+  'delta.autoOptimize.autoCompact' = 'true'
+)
 
 
+Q: Z-Ordering — How? Difference from partitioning?
+Z-Ordering co-locates related data within files using a space-filling Z-curve. Files are organized so rows with similar values in Z-ordered columns are in the same files.
 
+OPTIMIZE my_table ZORDER BY   (USER_ID, DATE)
+How it improves queries:
+Delta stores min/max stats per file per column. Z-ordering makes these ranges tight, so queries like WHERE user_id = 123 AND date = '2026-01-01' skip most files.
 
+ZORDER vs Partitioning:
 
+Partitioning	Z-Ordering
+Mechanism	Separate directories per value	Co-locate within files
+Cardinality	Low cardinality only (<1000 values)	High cardinality OK
+Multiple columns	Hierarchical (order matters)	Multi-dimensional (order-independent)
+File count	One+ files per partition value	Controlled file count
+Query pattern	Single column equality filters	Multi-column range/equality.
 
+Combine both: Partition by date, Z-order by user_id within each partition.
+Q: File compaction (bin-packing)?
 
+Part of OPTIMIZE. Takes many small files and rewrites them into fewer, optimally-sized files (~1GB target). Doesn't change sort order or data content. Reduces:
 
+File listing overhead
+Task creation overhead
+Small file reads
+Cloud API calls
+
+DESCRIBE HISTORY AND DESCRIBE DETAIL
+DESCRIBE HISTORY my_table
+-- Shows: version, timestamp, userId, operation, operationParameters, notebook, cluster
+
+DESCRIBE DETAIL my_table
+-- Shows: format, id, name, description, location, createdAt, lastModified,
+-- partitionColumns, numFiles, sizeInBytes, properties, minReaderVersion, minWriterVersion
+
+Q: Delta Lake Constraints?
+-- NOT NULL
+ALTER TABLE t ALTER COLUMN col SET NOT NULL
+
+-- CHECK constraints
+ALTER TABLE t ADD CONSTRAINT valid_age CHECK (age > 0 AND age < 200)
+ALTER TABLE t ADD CONSTRAINT valid_date CHECK (end_date > start_date)
+
+-- Drop constraint
+ALTER TABLE t DROP CONSTRAINT valid_age
+
+Q: Generated Columns?
+Columns whose values are automatically computed from other columns:
+CREATE TABLE events (
+  event_time TIMESTAMP,
+  event_date DATE GENERATED ALWAYS AS (CAST(event_time AS DATE)),
+  year INT GENERATED ALWAYS AS (YEAR(event_time))
+) USING DELTA
+PARTITIONED BY (event_date)
+
+Benefits: Automatic partition column derivation, consistent computed values, Delta can use them for partition pruning even if you filter on the source column.
+
+Q: Change Data Feed (CDF)?
+
+Records row-level changes (INSERT, UPDATE_PREIMAGE, UPDATE_POSTIMAGE, DELETE) for downstream consumers.
+ALTER TABLE my_table SET TBLPROPERTIES ('delta.enableChangeDataFeed' = true)
+
+changes = spark.read.format("delta") \
+  .option("readChangeFeed", "true") \
+  .option("startingVersion", 5) \
+  .option("endingVersion", 10) \
+  .table("my_table")
+
+spark.readStream.format("delta") \
+  .option("readChangeFeed", "true") \
+  .option("startingVersion", 0) \
+  .table("my_table")
+
+Liquid Clustering - Replaces static partitioning + Z-ordering with dynamic, incremental clustering.
+CREATE TABLE t (id INT, date DATE, region STRING) 
+USING DELTA CLUSTER BY (date, region)
+
+-- Re-cluster incrementally
+OPTIMIZE t
+
+Advantages over partitioning + Z-order:
+
+No need to choose partition column upfront (can change cluster keys)
+Handles high-cardinality columns
+Incremental — only re-clusters new/modified data
+No small file problem from over-partitioning
+No need to run ZORDER — regular OPTIMIZE handles it
+Can evolve cluster keys without rewriting table
+
+Q: Deletion Vectors?
+Instead of rewriting entire Parquet files for DELETE/UPDATE/MERGE, Delta marks deleted rows in a lightweight bitmap file (deletion vector) attached to the data file.
+Benefits:
+DML operations 2-10x faster (no file rewrite)
+Less write amplification
+Background compaction later merges deletion vectors into new clean files
+Enable:
+
+Q: Row-Level Concurrency?
+With deletion vectors, concurrent MERGE/UPDATE/DELETE operations on the same file can succeed if they touch different rows. Without deletion vectors, any two operations touching the same file conflict.
+This dramatically improves concurrency for tables with frequent DML from multiple writers.
+
+Q: UniForm (Universal Format)?
+Makes Delta tables readable by Iceberg and Hudi clients without data duplication:
+ALTER TABLE t SET TBLPROPERTIES (
+  'delta.universalFormat.enabledFormats' = 'iceberg, hudi'
+)
+Delta automatically generates Iceberg metadata files alongside Delta log. External engines (Trino, Presto, Snowflake) can read the same data using their native Iceberg reader.
+
+Q: Delta Sharing?
+
+Open protocol for secure cross-organization data sharing without copying:
+
+Provider shares tables via a sharing server
+Recipient accesses via REST API with short-lived credentials
+No data copying — recipient reads directly from provider's storage
+Works across clouds and platforms
+Row/column filtering on shared data
+Audit log of all access
+
+SHALLOW clone and DEEP clone
+CREATE TABLE clone DEEP CLONE source
+CREATE TABLE clone SHALLOW CLONE SOURCE
+
+Deep Clone	Shallow Clone
+Data files	Copied (independent)	Referenced (depends on source)
+Size	Same as source	Tiny (just metadata)
+Independence	Fully independent	Breaks if source files vacuumed
+Use case	Production copy, migration	Testing, experimentation
 
 =========================================================
 
